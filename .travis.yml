@@ -1,7 +1,7 @@
 sudo: true
 matrix:
   include:
-    - os: linux
+    - os: ubuntu
       dist: bionic
       sudo: required
 install:
