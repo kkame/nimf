@@ -4,6 +4,7 @@ os:
   - bionic
 install:
   - sudo apt install devscripts build-essential debhelper
+  - sudo apt install libglib2.0-dev pkg-config intltool libgtk-3-dev libgtk-3-bin libgtk2.0-dev libqt4-dev qtbase5-dev qtbase5-private-dev libappindicator3-dev librsvg2-bin fonts-noto-cjk libhangul-dev libanthy-dev anthy libchewing3-dev librime-dev libxkbcommon-dev libwayland-dev wayland-protocols libaudit-dev
   
 script:
   - dpkg-checkbuilddeps
