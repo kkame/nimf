@@ -2,15 +2,12 @@ sudo: true
 matrix:
   include:
     - os: linux
-      dist: xinial
-      sudo: required
-    - os: linux
       dist: bionic
       sudo: required
 install:
   - sudo apt update
   - sudo apt install devscripts build-essential debhelper -y
-  - sudo apt install libglib2.0-dev pkg-config intltool libgtk-3-dev libgtk-3-bin libgtk2.0-dev libqt4-dev qtbase5-dev qtbase5-private-dev libappindicator3-dev librsvg2-bin fonts-noto-cjk libhangul-dev libanthy-dev anthy libchewing3-dev librime-dev libxkbcommon-dev libwayland-dev wayland-protocols libaudit-dev -y
+  - sudo apt install libglib2.0-dev pkg-config intltool libgtk-3-dev libgtk-3-bin libgtk2.0-dev libqt4-dev libappindicator3-dev librsvg2-bin libhangul-dev libanthy-dev anthy libchewing3-dev libxkbcommon-dev libwayland-dev libaudit-dev -y
   
 script:
   - dpkg-checkbuilddeps
