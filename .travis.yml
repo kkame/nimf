@@ -1,0 +1,10 @@
+sudo: true
+os:
+  - xinial
+  - bionic
+install:
+  - sudo apt install devscripts build-essential debhelper
+  
+script:
+  - dpkg-checkbuilddeps
+  - debuild -S
