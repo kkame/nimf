@@ -635,8 +635,17 @@ static const GtkIMContextInfo nimf_info = {
   "ko:ja:zh"        /* Languages for which this module is the default */
 };
 
+static const GtkIMContextInfo nimf_wayland_info = {
+  "wayland",        /* ID */
+  N_("Nimf Wayland"),
+  GETTEXT_PACKAGE,
+  NIMF_LOCALE_DIR,
+  ""
+};
+
 static const GtkIMContextInfo *info_list[] = {
-  &nimf_info
+  &nimf_info,
+  &nimf_wayland_info
 };
 
 G_MODULE_EXPORT void im_module_init (GTypeModule *type_module)
@@ -664,7 +673,9 @@ G_MODULE_EXPORT GtkIMContext *im_module_create (const gchar *context_id)
 {
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 
-  if (g_strcmp0 (context_id, PACKAGE) == 0)
+  if (g_strcmp0 (context_id, PACKAGE) == 0 ||
+      g_strcmp0 (context_id, "wayland") == 0 ||
+      g_strcmp0 (context_id, "ibus") == 0)
     return nimf_gtk_im_context_new ();
   else
     return NULL;

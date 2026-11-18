@@ -33,6 +33,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <gio/gio.h>
 #include <wayland-client.h>
 #include <wayland-server.h>
 #include <xkbcommon/xkbcommon.h>
@@ -89,6 +90,14 @@ struct _NimfWayland
   xkb_mod_mask_t meta_mask;
 
   uint32_t serial;
+
+  /* IBus / GNOME Wayland (zwp_text_input_v3) bridge */
+  GDBusConnection *ibus_conn;
+  guint            ibus_factory_reg_id;
+  guint            ibus_engine_reg_id;
+  guint            ibus_watch_timer_id;
+  guint            ibus_engine_Changed_sub_id;
+  gchar           *ibus_engine_path;
 };
 
 GType nimf_wayland_get_type (void) G_GNUC_CONST;
