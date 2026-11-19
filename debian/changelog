@@ -1,3 +1,14 @@
+nimf (1.4.22) stable; urgency=medium
+
+  * Release v1.4.22
+  * Fix Korean last-syllable bug on GNOME Wayland / IBus bridge:
+    - Avoid unconditional SetGlobalEngine polling every 3s
+    - Use IBUS_ENGINE_PREEDIT_COMMIT with silent Reset/FocusOut sync
+    - Coalesce multiple commits per key event (e.g. Hangul + punctuation/Space)
+    - Clear preedit before CommitText and use UTF-8 character indices in preedit attrs
+
+ -- kkame <kkamenet@gmail.com>  Thu, 19 Nov 2026 23:35:00 +0900
+
 nimf (1.4.21) stable; urgency=medium
 
   * Release v1.4.21
