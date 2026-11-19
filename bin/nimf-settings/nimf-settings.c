@@ -1218,16 +1218,22 @@ on_toggled (GtkToggleButton *toggle_button,
 }
 
 static void
-configure_button (GtkWidget *button, const XklConfigItem *item, NimfXkb *xkb)
+configure_button_by_name (GtkWidget *button, const gchar *name, NimfXkb *xkb)
 {
-  gtk_widget_set_name (button, item->name);
+  gtk_widget_set_name (button, name);
 
-  if (g_strv_contains ((const gchar * const *) xkb->options, item->name))
+  if (g_strv_contains ((const gchar * const *) xkb->options, name))
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
 
   g_signal_connect (button, "toggled", G_CALLBACK (on_toggled), xkb);
   xkb->toggle_buttons = g_slist_append (xkb->toggle_buttons, button);
   gtk_box_pack_start (GTK_BOX (xkb->vbox), button, FALSE, FALSE, 0);
+}
+
+static void
+configure_button (GtkWidget *button, const XklConfigItem *item, NimfXkb *xkb)
+{
+  configure_button_by_name (button, item->name, xkb);
 }
 
 static void
@@ -1320,6 +1326,223 @@ nimf_xkb_free (NimfXkb *xkb)
   g_slice_free (NimfXkb, xkb);
 }
 
+typedef struct
+{
+  NimfXkb  *xkb;
+  gboolean  in_option_list;
+  gboolean  in_group;
+  gboolean  in_option;
+  gboolean  in_config_item;
+  gboolean  in_name;
+  gboolean  in_description;
+  gboolean  allow_multiple;
+  GString  *name_buf;
+  GString  *desc_buf;
+} NimfXkbXmlParser;
+
+static const gchar *
+translate_xkb_desc (const gchar *desc)
+{
+  if (!desc || !*desc)
+    return desc;
+
+  const gchar *tr = dgettext ("xkeyboard-config-2", desc);
+  if (tr && g_strcmp0 (tr, desc) != 0)
+    return tr;
+
+  return dgettext ("xkeyboard-config", desc);
+}
+
+static void
+xkb_xml_start_element (GMarkupParseContext  *context,
+                       const gchar          *element_name,
+                       const gchar         **attribute_names,
+                       const gchar         **attribute_values,
+                       gpointer              user_data,
+                       GError              **error)
+{
+  NimfXkbXmlParser *p = (NimfXkbXmlParser *) user_data;
+
+  if (g_strcmp0 (element_name, "optionList") == 0)
+  {
+    p->in_option_list = TRUE;
+  }
+  else if (p->in_option_list && g_strcmp0 (element_name, "group") == 0)
+  {
+    p->in_group = TRUE;
+    p->allow_multiple = FALSE;
+    for (gint i = 0; attribute_names && attribute_names[i]; i++)
+    {
+      if (g_strcmp0 (attribute_names[i], "allowMultipleSelection") == 0)
+      {
+        p->allow_multiple = (g_strcmp0 (attribute_values[i], "true") == 0);
+        break;
+      }
+    }
+  }
+  else if (p->in_group && g_strcmp0 (element_name, "option") == 0)
+  {
+    p->in_option = TRUE;
+  }
+  else if (p->in_group && g_strcmp0 (element_name, "configItem") == 0)
+  {
+    p->in_config_item = TRUE;
+    g_string_truncate (p->name_buf, 0);
+    g_string_truncate (p->desc_buf, 0);
+  }
+  else if (p->in_config_item && g_strcmp0 (element_name, "name") == 0)
+  {
+    p->in_name = TRUE;
+  }
+  else if (p->in_config_item && g_strcmp0 (element_name, "description") == 0)
+  {
+    p->in_description = TRUE;
+  }
+}
+
+static void
+xkb_xml_text (GMarkupParseContext  *context,
+              const gchar          *text,
+              gsize                 text_len,
+              gpointer              user_data,
+              GError              **error)
+{
+  NimfXkbXmlParser *p = (NimfXkbXmlParser *) user_data;
+
+  if (p->in_name)
+    g_string_append_len (p->name_buf, text, text_len);
+  else if (p->in_description)
+    g_string_append_len (p->desc_buf, text, text_len);
+}
+
+static void
+xkb_xml_end_element (GMarkupParseContext  *context,
+                     const gchar          *element_name,
+                     gpointer              user_data,
+                     GError              **error)
+{
+  NimfXkbXmlParser *p = (NimfXkbXmlParser *) user_data;
+
+  if (g_strcmp0 (element_name, "optionList") == 0)
+  {
+    p->in_option_list = FALSE;
+  }
+  else if (p->in_group && g_strcmp0 (element_name, "group") == 0)
+  {
+    p->in_group = FALSE;
+    p->in_option = FALSE;
+    p->xkb->vbox = NULL;
+    p->xkb->radio_group = NULL;
+  }
+  else if (p->in_option && g_strcmp0 (element_name, "option") == 0)
+  {
+    p->in_option = FALSE;
+  }
+  else if (p->in_config_item && g_strcmp0 (element_name, "configItem") == 0)
+  {
+    p->in_config_item = FALSE;
+
+    const gchar *name = g_strstrip (p->name_buf->str);
+    const gchar *raw_desc = g_strstrip (p->desc_buf->str);
+    const gchar *desc = translate_xkb_desc (*raw_desc ? raw_desc : name);
+
+    if (!p->in_option)
+    {
+      /* Start of a new option group */
+      p->xkb->radio_group = NULL;
+      GtkWidget *expander = gtk_expander_new (desc);
+      p->xkb->vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+      gtk_widget_set_margin_start (p->xkb->vbox, 15);
+      gtk_container_add (GTK_CONTAINER (expander), p->xkb->vbox);
+      gtk_box_pack_start (GTK_BOX (p->xkb->options_box), expander, FALSE, FALSE, 0);
+
+      p->xkb->expanders = g_slist_append (p->xkb->expanders, expander);
+      g_signal_connect (expander, "notify::expanded",
+                        G_CALLBACK (on_xkb_expander_notify_expanded), p->xkb);
+
+      if (!p->allow_multiple)
+      {
+        GtkWidget *radio_button =
+          gtk_radio_button_new_with_label (p->xkb->radio_group, _("Default"));
+        g_signal_connect (radio_button, "toggled", G_CALLBACK (on_toggled), p->xkb);
+        p->xkb->radio_group =
+          gtk_radio_button_get_group (GTK_RADIO_BUTTON (radio_button));
+        gtk_box_pack_start (GTK_BOX (p->xkb->vbox), radio_button, FALSE, FALSE, 0);
+      }
+    }
+    else if (p->xkb->vbox && *name)
+    {
+      if (p->allow_multiple)
+      {
+        GtkWidget *check_button = gtk_check_button_new_with_label (desc);
+        configure_button_by_name (check_button, name, p->xkb);
+      }
+      else
+      {
+        GtkWidget *radio_button =
+          gtk_radio_button_new_with_label (p->xkb->radio_group, desc);
+        p->xkb->radio_group =
+          gtk_radio_button_get_group (GTK_RADIO_BUTTON (radio_button));
+        configure_button_by_name (radio_button, name, p->xkb);
+      }
+    }
+  }
+  else if (g_strcmp0 (element_name, "name") == 0)
+  {
+    p->in_name = FALSE;
+  }
+  else if (g_strcmp0 (element_name, "description") == 0)
+  {
+    p->in_description = FALSE;
+  }
+}
+
+static gboolean
+nimf_settings_load_xkb_options_from_xml (NimfXkb *xkb)
+{
+  static const gchar *xml_paths[] = {
+    "/usr/share/X11/xkb/rules/evdev.xml",
+    "/usr/share/xkeyboard-config-2/rules/evdev.xml",
+    NULL
+  };
+  gchar *contents = NULL;
+  gsize  length = 0;
+
+  for (gint i = 0; xml_paths[i] != NULL; i++)
+  {
+    if (g_file_get_contents (xml_paths[i], &contents, &length, NULL))
+      break;
+  }
+
+  if (!contents)
+    return FALSE;
+
+  NimfXkbXmlParser parser_state = { 0 };
+  parser_state.xkb = xkb;
+  parser_state.name_buf = g_string_new (NULL);
+  parser_state.desc_buf = g_string_new (NULL);
+
+  static const GMarkupParser markup_parser = {
+    xkb_xml_start_element,
+    xkb_xml_end_element,
+    xkb_xml_text,
+    NULL,
+    NULL
+  };
+
+  GMarkupParseContext *ctx =
+    g_markup_parse_context_new (&markup_parser, 0, &parser_state, NULL);
+  gboolean ok = g_markup_parse_context_parse (ctx, contents, length, NULL) &&
+                g_markup_parse_context_end_parse (ctx, NULL);
+
+  g_markup_parse_context_free (ctx);
+  g_string_free (parser_state.name_buf, TRUE);
+  g_string_free (parser_state.desc_buf, TRUE);
+  g_free (contents);
+
+  return ok;
+}
+
 static GtkWidget *
 nimf_settings_build_xkb_options_ui ()
 {
@@ -1345,7 +1568,7 @@ nimf_settings_build_xkb_options_ui ()
   gtk_widget_set_margin_top    (xkb->options_box, 15);
   gtk_widget_set_margin_bottom (xkb->options_box, 15);
 
-  /* Check if we're running on X11 before using X11-specific functions */
+  /* Load XKB options: use libxklavier on X11, fall back to evdev.xml on Wayland */
   if (GDK_IS_X11_DISPLAY (gdk_display_get_default ()))
   {
     xkb->engine =
@@ -1359,6 +1582,10 @@ nimf_settings_build_xkb_options_ui ()
                                                 xkb);
       g_object_unref (config_registry);
     }
+  }
+  else
+  {
+    nimf_settings_load_xkb_options_from_xml (xkb);
   }
   g_object_unref (settings);
 
