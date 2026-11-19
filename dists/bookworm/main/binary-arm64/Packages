@@ -1,0 +1,97 @@
+Package: nimf
+Version: 1.4.21
+Architecture: arm64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 1666
+Depends: libanthy1, libayatana-appindicator3-1 (>= 0.2.96), libc6 (>= 2.34), libgcc-s1 (>= 3.0), libglib2.0-0 (>= 2.67.3), libgtk-3-0 (>= 3.21.5), libgtk-4-1 (>= 4.3.1), libgtk2.0-0 (>= 2.18.0), libhangul1 (>= 0.1.0+git20170815), libpango-1.0-0 (>= 1.14.0), libqt5core5a (>= 5.12.2), libqt5gui5 (>= 5.6.0~beta) | libqt5gui5-gles (>= 5.6.0~beta), libqt5widgets5 (>= 5.0.2), libqt6core6 (>= 6.4.0), libqt6gui6 (>= 6.1.2), libqt6widgets6 (>= 6.1.2), librime1 (>= 1.8.5+dfsg1~), libstdc++6 (>= 5), libwayland-client0 (>= 1.20.0), libx11-6, libxkbcommon0 (>= 0.5.0), libxklavier16 (>= 5.0), qtbase-abi-5-15-8, dconf-gsettings-backend | gsettings-backend, fonts-noto-cjk, anthy, libhangul-data
+Recommends: im-config
+Suggests: nimf-i18n
+Conflicts: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Replaces: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Provides: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Filename: pool/bookworm/main/arm64/nimf_1.4.21_arm64.deb
+Size: 282760
+MD5sum: 820bcb397418aaa68e46a6ae0b673f0e
+SHA1: 894e0be11c8ba03d855de6681c07c2b084f0c227
+SHA256: 414ac32293af3749dd28a473799fd8fe51924c8f3b00adbbccd000e6b660f59b
+Section: utils
+Priority: optional
+Homepage: https://github.com/hamonikr/nimf
+Description: Modern Input Method Framework
+ Nimf is a lightweight, fast and extensible input method framework that supports
+ various input methods and platforms.
+ .
+ Features:
+  * Lightweight and fast input method framework
+  * Supports GTK2, GTK3, GTK4, Qt5, Qt6
+  * Korean input (libhangul)
+  * Japanese input (anthy)
+  * Chinese input (rime)
+  * Optional multilingual input via separate package `nimf-i18n` (m17n)
+  * System keyboard integration
+  * Wayland support
+  * Modern UI with system tray indicator
+ .
+ This package provides the core Nimf framework and the K/J/C input method
+ engines (libhangul, anthy, rime).
+
+Package: nimf-dbgsym
+Source: nimf
+Version: 1.4.21
+Auto-Built-Package: debug-symbols
+Architecture: arm64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 1461
+Depends: nimf (= 1.4.21)
+Filename: pool/bookworm/main/arm64/nimf-dbgsym_1.4.21_arm64.deb
+Size: 1239424
+MD5sum: 527809e668dc41b2ae67de7137b74905
+SHA1: 849fe1b675ebed759cb12227e617f3067530f4eb
+SHA256: 0025599bff42e0f54de44ca761a0dceebc0a553fc83d02b48eda20792758c40d
+Section: debug
+Priority: optional
+Description: debug symbols for nimf
+Build-Ids: 0c4e369aef07f27b9562428413ef6ca0a0fbf44a 2553efaf7af65f621245e5f9c19aa8488bb4a154 39181a0b3b2ff9c5c2fe111817c192aff8281ed0 3a13d4dbf3f2b63d43ac238638262fca9a8864ec 4d0b22618f1ad2bc7a95aab9dd909d12617a0bde 69b07f7ea49d3e2aacc758c7de6c1b0b753f39b6 7cda83f8a1b86e70bdb534a7610794c999e88455 88c1498c986ea296f7f0061448ddfd2d578c4fc9 a03f11bf57c2b1fd6e44e4cc83ffb46e6082e0c3 a138304f855cc1d493e9a3eed87edf3c75df37be a4ca425b0c24e154508c14310af762a2a0c16f81 ade7bb0ffde79a6ebe506c046770773e85b39721 b3753fceb1ccfa1f912aa2e34b8d9124f164c059 bc4ead3509c79c618905f0b21333e7fb58941a66 c4520603bd5f8f11133165885c4a44efd254cd8d cc6a59d724758c98f5909e3a87b26934249a0117 ed65db30686b8cbcdaedfa805fa1122e2ef9d2c6 ff1ab545da3b9be30bdfff39f432f47006e36714
+
+Package: nimf-i18n
+Source: nimf
+Version: 1.4.21
+Architecture: arm64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 5336
+Depends: libc6 (>= 2.17), libglib2.0-0 (>= 2.54), libm17n-0 (>= 1.7.0), nimf (= 1.4.21), dconf-gsettings-backend | gsettings-backend, m17n-db (>= 1.7.0)
+Conflicts: nimf-m17n
+Breaks: nimf (<< 1.3.9)
+Replaces: nimf (<< 1.3.9), nimf-m17n
+Provides: nimf-m17n
+Filename: pool/bookworm/main/arm64/nimf-i18n_1.4.21_arm64.deb
+Size: 859792
+MD5sum: 98920b6a34dd2d64d9d127256cef9e8b
+SHA1: 2f6c215d6b518afb5b30f196b6d8e2c8536d12c0
+SHA256: d45029c7f35f5d5bfbd3a32f2978bfae3a5c24af3eda7aba4299667d2bb4e4bc
+Section: utils
+Priority: optional
+Homepage: https://github.com/hamonikr/nimf
+Description: Additional multilingual engines (m17n) for Nimf
+ This package contains additional multilingual input method engines based on
+ m17n for Nimf, along with their icons and settings schemas. Install this to
+ enable many extra languages beyond Korean, Japanese, and Chinese.
+
+Package: nimf-i18n-dbgsym
+Source: nimf
+Version: 1.4.21
+Auto-Built-Package: debug-symbols
+Architecture: arm64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 992
+Depends: nimf-i18n (= 1.4.21)
+Filename: pool/bookworm/main/arm64/nimf-i18n-dbgsym_1.4.21_arm64.deb
+Size: 425268
+MD5sum: cd4221082522976fb2053ee27cad599e
+SHA1: b1e0075488f219ccedf3074c08f6c6419acb01f8
+SHA256: f22a9f1a6f4920659e16bd0bb2decc4c117e64d1d4114d1464c5dbb761d47ec8
+Section: debug
+Priority: optional
+Description: debug symbols for nimf-i18n
+Build-Ids: 054179e4e707c6a2197fa708b13e07c301607f8c 05e85ce755e626f91a5c53c386f05242cdcc46fb 11af692708ace6da46e1fedb0cdcea6412d860e5 14c11b03ede92d1d8e8dd1c797f8813fe865df6e 1d3c2b3ad4b8411b6cb32374b4324192332c1830 21c71f8d2dfda01447aa47c99155eb01a0113f16 22792e93379c45697a26a28e119f4d0c4401db64 22fdee0a4afc2a53d7d67e45666c0381fa69e65e 272dad06d50c1b3b3cf40c6668bd78676666e8db 2b2a476d1915cc42859c76892fec8d6117d0ea3a 30e4de5cfa5961906a5436433c39d2bf26fd7617 338faa18def8840e1a637b2be50d7a9a96bce0ac 343089c3b098c4fc410e02421f2e1409e1081e2d 4084f5dae10772f87819f2bacb1d319b06b2e5f1 44694ea3f57329fa01e46f5efa4e09e492824412 45ca3fbf54bee6e11bcb079c6a14a12ebf84abdf 4c3687f89612c9cf5d355576f517265a8859474b 5009fd39d5dd113295e9cc058df241c1d5f39049 5a518bf8e4e2b0cff286af41b4fd3e3c69f0dd0c 5ce158b0cbc617a85274c7cf7dc1069cf899d6a8 639628587c2aa41f7748cdce00c0eb13ca281154 6737f89eaf828e3225ce45225e548a4b01c0ee6a 6b424bdaa3bbbcab2ffe570e39c982ff4d0a7658 742325d3953b39b5090783fa835ee4da0786c25f 7ea39fbd0a2e47585b5a3a4918e4c1a37ea7affe 83682cc03064c809ec539a6bc206a8a1e2d46218 85fc162c2fd8208b3e8560c06762bf6e095fc0c9 8cea284ec3e46b46bafc00bd9190f170b2aa9fb0 905d6f56671013243e2ff7393fa5936e5915d694 97f62f6cf03e2cb251f8b53deb7eed7fa5ca0abe 992f602c7d5190452df8b4eace3dff6f7c953c56 a4ff439ef35e4e1c410fd11a273497cc0cf79899 a6a6807daaeabf1c2949dcd56e77b2082b129dc1 aad42621421b1396bfeec6895ff193bf9a04c83e ae40815e7131b6887e7e3976d5aefa253074ba4a b64803a4dd817beb2f1f674719cbe7ab4eb62022 bc735b27d86f06b4e9aa47bcb533ab9183a04bd3 bce572f369de14359d9ff1906f5d1c21815d3fb3 c80d13fbbeaff01c4da0fb9f8e51bd1d6b8c8818 c9d1db8e1f96c8e4083ff35f3090f5e3a929f90e cad4555a226967d54079137bd39ecb083b14770d cad88e88a9b3060c2fdb726816e5b3da87825ebf cc1ff9d07c3b2afb21aaefab39447d31585f4cb5 cc6b3fd8a70b4a9aa5d93b9017894a29a875057e d07d1710dfdb0316b580d6fa5cbc66f8b46ab6ff d3ca1c3ef2839b3a49bfa15d14c04a7ce8c1c8e8 dbb587f2ca740c49208cf59f19cae5b5d126cf7d dcdaff322606a9c84a211426437c97255c90e888 deff352e48de0817d310060b065ea305630e8fd7 dfc9d06bd8dc21448efa609097d6a55ff7a90de7 e5a31bf7f3ffd99ef09deb76c32b7b4b70bebdc9 e6952626bb5ca81e338d923790bdc8d3b4c1b8bc eb089c9914c989363739173a54d9bcfc6e75b1d7 edf76205a211790c2b561e3f2ec5a37b014945ce ef98729c5db2468b38d9a42e4fb624fc8cdc8b9a f02b830e29442ad73c5ea8951c372a8d9702a482 f4a0c53ad6fe886f4ebf3b7da5bc6bf43348ac9a f65a66de13090f5db02b1563551e8ff0c1616196 f77a51f97422ba4bdb0eff18d1902fb41c4ecd80 f8b1835b43f05242661ad66f545dd83ff4211566 f8f31231c961432123b1dac6cf9ca246e9f5af45
+

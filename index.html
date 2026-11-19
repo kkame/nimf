@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Nimf APT Repository (kkame/nimf)</title></head>
+<body style="font-family: sans-serif; max-width: 780px; margin: 2rem auto; line-height: 1.6;">
+  <h1>Nimf APT Repository</h1>
+  <p>Ubuntu (24.04 Noble / 26.04 Resolute) &amp; Debian (12 Bookworm / 13 Trixie) APT repository for <a href="https://github.com/kkame/nimf">kkame/nimf</a>.</p>
+  <pre><code>curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
+echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
+sudo apt update &amp;&amp; sudo apt install -y nimf</code></pre>
+</body>
+</html>

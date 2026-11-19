@@ -1,0 +1,31 @@
+Architectures: amd64 arm64
+Codename: bookworm
+Components: main
+Date: Thu, 19 Nov 2026 14:00:23 +0000
+Label: Nimf Input Method Framework
+Origin: kkame-nimf
+Suite: bookworm
+MD5Sum:
+ 1617e165699f5fbda708f891436254f5              171 Release
+ 988c2e84382a344fabb31d59f5c285c0             7239 main/binary-amd64/Packages
+ 280d93dd2bb826c81bedd49e2084bb23             3667 main/binary-amd64/Packages.gz
+ 7f4d603bf5ece52e95be617b8801cfd8             7240 main/binary-arm64/Packages
+ 168ea884e7b88a5d8e670b49d86959e2             3676 main/binary-arm64/Packages.gz
+SHA1:
+ 5ba2053754c1a8220750c5270b221152b1773124              171 Release
+ d2c9a54f69747af8d75c59c83c3361d74ad4568b             7239 main/binary-amd64/Packages
+ d5000ba5e8e44c806ceebcd0b49b85496a5e0700             3667 main/binary-amd64/Packages.gz
+ fdd02ef9efcdc3174861738562daae58f4ec3773             7240 main/binary-arm64/Packages
+ 5a9787efad02dab4e412be91ae749b9c38d01423             3676 main/binary-arm64/Packages.gz
+SHA256:
+ 8ea9936322ab1744c9417b6b8ed9df9ca006ee1ecede75eb3fb255488f1c769c              171 Release
+ a7b902239afce152ee16cd479a9794fae0f704a8ed2ea6407b0b3fce33f50660             7239 main/binary-amd64/Packages
+ 1b00088c3797f7fa37ea61796fcb55d39bc754fe4cec613cc30fbec41a4bb127             3667 main/binary-amd64/Packages.gz
+ 50abe93e3e3af19b4dc49ce3de86d13b596f53fc0447e2315cad10019c1ecf74             7240 main/binary-arm64/Packages
+ 05c5880dd8a096a7df2f2249d713a3a221f4d392ada4766ea2d3f0937011852e             3676 main/binary-arm64/Packages.gz
+SHA512:
+ a0a726c39b15cbdcbde7b128e6db736898ca45eca8364feda7ecced9a38bfe85735c9fcfd43234bfbe5a22cb48d916d9aa6b192bc2a9b174fad7643cc52d21c9              171 Release
+ 753deaabbadc4f5716f489114a21cd57846ccfcb959f6f629f8fa5d13c5be1a72424e48e0f6ec1926db6f999df23f45cca7d16669dc3d91a522048fd6549a25f             7239 main/binary-amd64/Packages
+ cf7bbf84ddc840b4bad0f5d12c6ca912edf0cd821b66f65c2812bd04b7d0eaf2a2cac45a276a913d865f1248cbc8eedfd0f002ad14011374c056f4f98218d3fc             3667 main/binary-amd64/Packages.gz
+ 046edc9412a3407c8d9acef95a075dc4fba000f96cf74bc6163fb3bc6ededf4d7c6ad62eabbb20cb18798bb9c06b2dec7f8d1cd310f44ba2c2f8fc20cef9f21e             7240 main/binary-arm64/Packages
+ e2b0029ff4003c194fb5fd5d3884d694ea254878618cb458f7ae71a471c9482fd92e386763399e9eabfe1e601c41fb2df220a12d2d560e1a737d3345563d2d2f             3676 main/binary-arm64/Packages.gz

@@ -1,0 +1,50 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Architectures: amd64 arm64
+Codename: resolute
+Components: main
+Date: Thu, 19 Nov 2026 14:00:23 +0000
+Label: Nimf Input Method Framework
+Origin: kkame-nimf
+Suite: resolute
+MD5Sum:
+ d684c3e592d42241f6b17a1baf79e70c              171 Release
+ 8b08db66734c16dbd000000f65be837e             3026 main/binary-amd64/Packages
+ 210a2a2d5f2f5b623e07bf61b4114bde             1358 main/binary-amd64/Packages.gz
+ cb2d62cbe4a76fa9241b0a677db1220a             3026 main/binary-arm64/Packages
+ 871f73801a027ec2669847273a48282d             1358 main/binary-arm64/Packages.gz
+SHA1:
+ 7e8fb676161aeb1174659b08116fd609aebbac4f              171 Release
+ ad5e59d7b7b08dac17ee2776ab1ba50c3797f335             3026 main/binary-amd64/Packages
+ 0bac7d2232b2b56edf39e3a02e7c3bcce872533e             1358 main/binary-amd64/Packages.gz
+ 29d3e2e4bcb13efe1e8389b933bc676a4f82395f             3026 main/binary-arm64/Packages
+ 528f141e18d7dd1d5ae01dfc4740e30fdd4f60e2             1358 main/binary-arm64/Packages.gz
+SHA256:
+ 243a1edbedcbf00f1ef8794209b514efa6085712005f7c5cac64c190efe80db0              171 Release
+ f2694cacb0acf2b4f3b161cfadb573bea475ac8872867c34166931390ab449e8             3026 main/binary-amd64/Packages
+ c34780bf6337363ab2f047a878a0ee4fd9850ea7a7d2c0b17b244afe1db63549             1358 main/binary-amd64/Packages.gz
+ ff901e61df1afbe2944c9c30f6c62e6a747e72ee76fac0e6c6f4b04ef566fa05             3026 main/binary-arm64/Packages
+ 70d57093e5c5de301e0c9f248d4e96af6abb876c3ddd4570eef131706af3bc25             1358 main/binary-arm64/Packages.gz
+SHA512:
+ a76240d55ee00cb4a9aad4212c95e7030e52eccb58bf06c788eb496d88bd1cd5beac65950ce8d31e1edbf3c6d1610217e8006294efe9f5c4f4377f2cecdc569c              171 Release
+ 051a2321258428d9c63a4464bf4aef2be271405f81f7ad5e1e0171a3bc55456580674717f5038be4e56b7aa5b8a1c30f636ebfbb0c172de1434a43a045a1723d             3026 main/binary-amd64/Packages
+ 420bf46c6c93833f872104f48c20b419aecc41d56648fb35189113d302e5a4fe22c16ee38d0bc91830b537e8dcd4a265fa89faef58d227ef5dca3745ed007323             1358 main/binary-amd64/Packages.gz
+ 9d14e4c6afd31066c56ce79b21919022fe1fe8134f0bef4fd15d024b541f9ffa935114c54f8561f74fe15c0bed724927c73e0a37b0f957bd75110bc923be8759             3026 main/binary-arm64/Packages
+ a1d2cb63bdc5242822425a95e338a304c14c0f2a01c0b8e78b4196e7e073229d184ae08aefb6fce07212480e403d80753812391dfa3674a5feae8c603cf33f67             1358 main/binary-arm64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEj6FcE0Cci/Hx9gGtCkyjM2iq89IFAmr/APcACgkQCkyjM2iq
+89IQDhAAlqEwHIjW7Az4liRQGsm1k1HRSTSLmOZn/ze5GojOa7wFlZf06/wnpvUe
++kbHN6w07sHXHMHUFKdv4IlTyKYBRmQz6TyvyN4dR1eUAUs4Kq5CHvtA33+cRq+f
+fNujWuflO8A8/yBckNVqDx4lgglQH6U+v2mxYUsbfTmEEje77gBJ4sFCRDZXlo0q
+DRJD/BP1icm4EvFp7iyn9t6plKIWdwHsdLng6sPtvcSYwKdG3wlgt9aUL0roYaP3
+bwBd4vnLwf8VZLPjNj6Enm8NAcUf5FVhkTmKQ7uYkrr/3oN767TfZgKwjJQH4hQW
+Z31jVEG2882WiVlI2m9QAtHPzAwkBgD51g1+5pfVACh3QwCZOPt7E+GHByO1MofR
+zkswm+k11w7pQHXu+gX4w14MJt50aB2f7Iasr2iECkM2S9on66jkBle4L76iKvoL
+xNuitU/6UUtaAdGZSVEqCEBc2Jp/PnLVfvdnplIyuB070HQ0KWyAN1VQK3RUTMBw
+BRMHzq1G2VhbC5E6Ytjv3Ke/+8knACACET3BgcvEWViiyRuYxRxTY6cpGZdYpFIJ
+11dW8yP86zsdS7gANLEJR+bpJbT0r+7r/+yrHF+0RJCEr1/qPDFcRUkmqh84J0YH
+EXpgB9Ixwz8oZiNh7WmUAWQfYiCyDb4Ten0KDMhyIKQEBckUHWw=
+=PGok
+-----END PGP SIGNATURE-----
