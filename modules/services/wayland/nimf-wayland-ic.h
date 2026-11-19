@@ -50,8 +50,14 @@ struct _NimfWaylandIC
   NimfWayland *wayland;
 };
 
-GType          nimf_wayland_ic_get_type (void) G_GNUC_CONST;
-NimfWaylandIC *nimf_wayland_ic_new      (NimfWayland *wayland);
+GType          nimf_wayland_ic_get_type           (void) G_GNUC_CONST;
+NimfWaylandIC *nimf_wayland_ic_new                (NimfWayland *wayland);
+void           nimf_wayland_ic_ibus_flush_buffered (NimfWayland *wayland,
+                                                    gboolean    *handled,
+                                                    guint32      keyval,
+                                                    guint32      keycode,
+                                                    guint32      state,
+                                                    gboolean     is_key_press);
 
 G_END_DECLS
 

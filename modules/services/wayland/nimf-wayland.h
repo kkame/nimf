@@ -92,12 +92,23 @@ struct _NimfWayland
   uint32_t serial;
 
   /* IBus / GNOME Wayland (zwp_text_input_v3) bridge */
-  GDBusConnection *ibus_conn;
-  guint            ibus_factory_reg_id;
-  guint            ibus_engine_reg_id;
-  guint            ibus_watch_timer_id;
-  guint            ibus_engine_Changed_sub_id;
-  gchar           *ibus_engine_path;
+  GDBusConnection  *ibus_conn;
+  guint             ibus_factory_reg_id;
+  guint             ibus_factory_service_reg_id;
+  guint             ibus_engine_reg_id;
+  guint             ibus_engine_service_reg_id;
+  guint             ibus_watch_timer_id;
+  guint             ibus_engine_Changed_sub_id;
+  gchar            *ibus_engine_path;
+  guint32           ibus_caps;
+  gboolean          ibus_preedit_visible;
+  gboolean          ibus_suppress_signals;
+  gboolean          ibus_buffering;
+  GString          *ibus_pending_commit;
+  gboolean          ibus_has_pending_preedit;
+  gchar            *ibus_pending_preedit;
+  NimfPreeditAttr **ibus_pending_preedit_attrs;
+  gint              ibus_pending_cursor_pos;
 };
 
 GType nimf_wayland_get_type (void) G_GNUC_CONST;

@@ -596,19 +596,45 @@ nimf_wayland_on_engine_call (GDBusConnection       *conn,
     }
 
     NimfEvent *ev = nimf_event_new (NIMF_EVENT_NOTHING);
-    if (state & (1U << 30))
-      ev->key.type = NIMF_EVENT_KEY_RELEASE;
-    else
-      ev->key.type = NIMF_EVENT_KEY_PRESS;
-
+    gboolean is_key_press = ((state & (1U << 30)) == 0);
+    ev->key.type             = is_key_press ? NIMF_EVENT_KEY_PRESS : NIMF_EVENT_KEY_RELEASE;
     ev->key.state            = state & NIMF_MODIFIER_MASK;
     ev->key.keyval           = keyval;
     ev->key.hardware_keycode = keycode + 8;
 
+    /* Buffer signals emitted during filter_event so we can:
+     * 1. Clear preedit before CommitText,
+     * 2. Merge multiple commits (e.g. Hangul + punctuation/Space) into one
+     *    atomic CommitText so Wayland zwp_text_input_v3 does not overwrite
+     *    the first commit_string before .done,
+     * 3. Avoid redundant empty UpdatePreeditText signals. */
+    if (!wayland->ibus_pending_commit)
+      wayland->ibus_pending_commit = g_string_new (NULL);
+    g_string_truncate (wayland->ibus_pending_commit, 0);
+    wayland->ibus_has_pending_preedit = FALSE;
+    g_clear_pointer (&wayland->ibus_pending_preedit, g_free);
+    nimf_preedit_attr_freev (wayland->ibus_pending_preedit_attrs);
+    wayland->ibus_pending_preedit_attrs = NULL;
+    wayland->ibus_pending_cursor_pos = 0;
+
+    wayland->ibus_buffering = TRUE;
     gboolean handled = nimf_service_ic_filter_event (ic, ev);
+    wayland->ibus_buffering = FALSE;
     nimf_event_free (ev);
 
+    nimf_wayland_ic_ibus_flush_buffered (wayland, &handled,
+                                         keyval, keycode, state, is_key_press);
+
     g_dbus_method_invocation_return_value (inv, g_variant_new ("(b)", handled));
+    return;
+  }
+
+  if (g_strcmp0 (method_name, "SetCapabilities") == 0)
+  {
+    guint32 caps = 0;
+    g_variant_get (params, "(u)", &caps);
+    wayland->ibus_caps = caps;
+    g_dbus_method_invocation_return_value (inv, NULL);
     return;
   }
 
@@ -625,14 +651,25 @@ nimf_wayland_on_engine_call (GDBusConnection       *conn,
       g_strcmp0 (method_name, "FocusOutId") == 0 ||
       g_strcmp0 (method_name, "Disable") == 0)
   {
+    /* Preedit was sent with IBUS_ENGINE_PREEDIT_COMMIT (1), so Mutter / IBus
+     * has already committed the composing syllable synchronously before focus
+     * left. Reset Nimf's internal state silently without emitting a late or
+     * duplicate CommitText. */
+    wayland->ibus_suppress_signals = TRUE;
+    wayland->ibus_preedit_visible = FALSE;
     nimf_service_ic_focus_out (ic);
+    wayland->ibus_suppress_signals = FALSE;
     g_dbus_method_invocation_return_value (inv, NULL);
     return;
   }
 
   if (g_strcmp0 (method_name, "Reset") == 0)
   {
+    /* Preedit was already committed in-place by Mutter / IBus on Reset. */
+    wayland->ibus_suppress_signals = TRUE;
+    wayland->ibus_preedit_visible = FALSE;
     nimf_service_ic_reset (ic);
+    wayland->ibus_suppress_signals = FALSE;
     g_dbus_method_invocation_return_value (inv, NULL);
     return;
   }
@@ -648,12 +685,47 @@ nimf_wayland_on_engine_call (GDBusConnection       *conn,
 
   if (g_strcmp0 (method_name, "Destroy") == 0)
   {
+    wayland->ibus_suppress_signals = TRUE;
+    wayland->ibus_preedit_visible = FALSE;
     nimf_service_ic_reset (ic);
+    wayland->ibus_suppress_signals = FALSE;
     g_dbus_method_invocation_return_value (inv, NULL);
     return;
   }
 
   g_dbus_method_invocation_return_value (inv, NULL);
+}
+
+static GVariant *
+nimf_wayland_on_engine_get_property (GDBusConnection  *conn,
+                                     const gchar      *sender,
+                                     const gchar      *obj_path,
+                                     const gchar      *iface_name,
+                                     const gchar      *prop_name,
+                                     GError          **error,
+                                     gpointer          user_data)
+{
+  if (g_strcmp0 (prop_name, "FocusId") == 0 ||
+      g_strcmp0 (prop_name, "ActiveSurroundingText") == 0)
+    return g_variant_new ("(b)", FALSE);
+
+  return NULL;
+}
+
+static gboolean
+nimf_wayland_on_engine_set_property (GDBusConnection  *conn,
+                                     const gchar      *sender,
+                                     const gchar      *obj_path,
+                                     const gchar      *iface_name,
+                                     const gchar      *prop_name,
+                                     GVariant         *value,
+                                     GError          **error,
+                                     gpointer          user_data)
+{
+  if (g_strcmp0 (prop_name, "ContentType") == 0)
+    return TRUE;
+
+  return FALSE;
 }
 
 static void
@@ -699,6 +771,73 @@ nimf_wayland_request_global_engine (NimfWayland *wayland)
 }
 
 static void
+nimf_wayland_on_get_global_engine_done (GObject      *source_object,
+                                        GAsyncResult *res,
+                                        gpointer      user_data)
+{
+  NimfWayland *wayland = NIMF_WAYLAND (user_data);
+  GVariant *ret = g_dbus_connection_call_finish (G_DBUS_CONNECTION (source_object),
+                                                 res, NULL);
+  gboolean is_nimf = FALSE;
+
+  if (ret)
+  {
+    /* org.freedesktop.DBus.Properties.Get returns (v), where v contains
+     * a variant wrapping IBusEngineDesc struct (sa{sv}s...). Child 2 is name. */
+    GVariant *outer = NULL;
+    g_variant_get (ret, "(v)", &outer);
+    if (outer)
+    {
+      GVariant *desc = outer;
+      while (g_variant_is_of_type (desc, G_VARIANT_TYPE_VARIANT))
+      {
+        GVariant *inner = g_variant_get_variant (desc);
+        if (desc != outer)
+          g_variant_unref (desc);
+        desc = inner;
+      }
+      if (g_variant_is_container (desc) && g_variant_n_children (desc) > 2)
+      {
+        GVariant *name_var = g_variant_get_child_value (desc, 2);
+        if (name_var && g_variant_is_of_type (name_var, G_VARIANT_TYPE_STRING))
+          is_nimf = (g_strcmp0 (g_variant_get_string (name_var, NULL), "nimf") == 0);
+        if (name_var)
+          g_variant_unref (name_var);
+      }
+      if (desc != outer)
+        g_variant_unref (desc);
+      g_variant_unref (outer);
+    }
+    g_variant_unref (ret);
+  }
+
+  if (!is_nimf)
+    nimf_wayland_request_global_engine (wayland);
+
+  g_object_unref (wayland);
+}
+
+static void
+nimf_wayland_check_global_engine (NimfWayland *wayland)
+{
+  if (!wayland->ibus_conn || g_dbus_connection_is_closed (wayland->ibus_conn))
+    return;
+
+  g_dbus_connection_call (wayland->ibus_conn,
+                          "org.freedesktop.IBus",
+                          "/org/freedesktop/IBus",
+                          "org.freedesktop.DBus.Properties",
+                          "Get",
+                          g_variant_new ("(ss)", "org.freedesktop.IBus", "GlobalEngine"),
+                          G_VARIANT_TYPE ("(v)"),
+                          G_DBUS_CALL_FLAGS_NONE,
+                          -1,
+                          NULL,
+                          nimf_wayland_on_get_global_engine_done,
+                          g_object_ref (wayland));
+}
+
+static void
 nimf_wayland_on_global_engine_changed (GDBusConnection *conn,
                                        const gchar     *sender_name,
                                        const gchar     *object_path,
@@ -719,14 +858,8 @@ nimf_wayland_on_global_engine_changed (GDBusConnection *conn,
 }
 
 static void
-nimf_wayland_ibus_stop (NimfWayland *wayland)
+nimf_wayland_ibus_disconnect (NimfWayland *wayland)
 {
-  if (wayland->ibus_watch_timer_id)
-  {
-    g_source_remove (wayland->ibus_watch_timer_id);
-    wayland->ibus_watch_timer_id = 0;
-  }
-
   if (wayland->ibus_conn)
   {
     if (wayland->ibus_engine_Changed_sub_id)
@@ -741,17 +874,50 @@ nimf_wayland_ibus_stop (NimfWayland *wayland)
                                            wayland->ibus_factory_reg_id);
       wayland->ibus_factory_reg_id = 0;
     }
+    if (wayland->ibus_factory_service_reg_id)
+    {
+      g_dbus_connection_unregister_object (wayland->ibus_conn,
+                                           wayland->ibus_factory_service_reg_id);
+      wayland->ibus_factory_service_reg_id = 0;
+    }
     if (wayland->ibus_engine_reg_id)
     {
       g_dbus_connection_unregister_object (wayland->ibus_conn,
                                            wayland->ibus_engine_reg_id);
       wayland->ibus_engine_reg_id = 0;
     }
+    if (wayland->ibus_engine_service_reg_id)
+    {
+      g_dbus_connection_unregister_object (wayland->ibus_conn,
+                                           wayland->ibus_engine_service_reg_id);
+      wayland->ibus_engine_service_reg_id = 0;
+    }
     g_object_unref (wayland->ibus_conn);
     wayland->ibus_conn = NULL;
   }
 
+  wayland->ibus_preedit_visible = FALSE;
+  wayland->ibus_buffering = FALSE;
+  wayland->ibus_has_pending_preedit = FALSE;
+  g_clear_pointer (&wayland->ibus_pending_preedit, g_free);
+  nimf_preedit_attr_freev (wayland->ibus_pending_preedit_attrs);
+  wayland->ibus_pending_preedit_attrs = NULL;
+  if (wayland->ibus_pending_commit)
+    g_string_truncate (wayland->ibus_pending_commit, 0);
+
   g_clear_pointer (&wayland->ibus_engine_path, g_free);
+}
+
+static void
+nimf_wayland_ibus_stop (NimfWayland *wayland)
+{
+  if (wayland->ibus_watch_timer_id)
+  {
+    g_source_remove (wayland->ibus_watch_timer_id);
+    wayland->ibus_watch_timer_id = 0;
+  }
+
+  nimf_wayland_ibus_disconnect (wayland);
 }
 
 static GDBusNodeInfo *
@@ -799,6 +965,13 @@ nimf_wayland_build_engine_node (void)
     "    <method name='Enable'/>"
     "    <method name='Disable'/>"
     "    <method name='SetSurroundingText'><arg name='text' direction='in' type='v'/><arg name='cursor' direction='in' type='u'/><arg name='anchor' direction='in' type='u'/></method>"
+    "    <signal name='CommitText'><arg name='text' type='v'/></signal>"
+    "    <signal name='ForwardKeyEvent'><arg name='keyval' type='u'/><arg name='keycode' type='u'/><arg name='state' type='u'/></signal>"
+    "    <signal name='UpdatePreeditText'><arg name='text' type='v'/><arg name='cursor_pos' type='u'/><arg name='visible' type='b'/><arg name='mode' type='u'/></signal>"
+    "    <signal name='DeleteSurroundingText'><arg name='offset' type='i'/><arg name='nchars' type='u'/></signal>"
+    "    <property name='ContentType' type='(uu)' access='write'/>"
+    "    <property name='FocusId' type='(b)' access='read'/>"
+    "    <property name='ActiveSurroundingText' type='(b)' access='read'/>"
     "  </interface>"
     "  <interface name='org.freedesktop.IBus.Service'>"
     "    <method name='Destroy'/>"
@@ -812,7 +985,10 @@ static const GDBusInterfaceVTable nimf_factory_vtable = {
 };
 
 static const GDBusInterfaceVTable nimf_engine_vtable = {
-  nimf_wayland_on_engine_call, NULL, NULL, { 0 }
+  nimf_wayland_on_engine_call,
+  nimf_wayland_on_engine_get_property,
+  nimf_wayland_on_engine_set_property,
+  { 0 }
 };
 
 static gboolean
@@ -821,7 +997,7 @@ nimf_wayland_ibus_try_connect (NimfWayland *wayland)
   if (wayland->ibus_conn && !g_dbus_connection_is_closed (wayland->ibus_conn))
     return TRUE;
 
-  nimf_wayland_ibus_stop (wayland);
+  nimf_wayland_ibus_disconnect (wayland);
 
   gchar *addr = nimf_wayland_find_ibus_address ();
   if (!addr)
@@ -849,10 +1025,24 @@ nimf_wayland_ibus_try_connect (NimfWayland *wayland)
                                        &nimf_factory_vtable,
                                        wayland, NULL, NULL);
 
+  wayland->ibus_factory_service_reg_id =
+    g_dbus_connection_register_object (wayland->ibus_conn,
+                                       "/org/freedesktop/IBus/Factory",
+                                       fnode->interfaces[1],
+                                       &nimf_factory_vtable,
+                                       wayland, NULL, NULL);
+
   wayland->ibus_engine_reg_id =
     g_dbus_connection_register_object (wayland->ibus_conn,
                                        wayland->ibus_engine_path,
                                        enode->interfaces[0],
+                                       &nimf_engine_vtable,
+                                       wayland, NULL, NULL);
+
+  wayland->ibus_engine_service_reg_id =
+    g_dbus_connection_register_object (wayland->ibus_conn,
+                                       wayland->ibus_engine_path,
+                                       enode->interfaces[1],
                                        &nimf_engine_vtable,
                                        wayland, NULL, NULL);
 
@@ -925,7 +1115,7 @@ nimf_wayland_ibus_on_timer (gpointer user_data)
   if (!wayland->ibus_conn || g_dbus_connection_is_closed (wayland->ibus_conn))
     nimf_wayland_ibus_try_connect (wayland);
   else
-    nimf_wayland_request_global_engine (wayland);
+    nimf_wayland_check_global_engine (wayland);
 
   return G_SOURCE_CONTINUE;
 }
@@ -1036,6 +1226,7 @@ nimf_wayland_init (NimfWayland *wayland)
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 
   wayland->id = g_strdup ("nimf-wayland");
+  wayland->ibus_pending_commit = g_string_new (NULL);
 }
 
 static void
@@ -1049,6 +1240,12 @@ nimf_wayland_finalize (GObject *object)
     nimf_wayland_stop (NIMF_SERVICE (wayland));
 
   g_free (wayland->id);
+
+  if (wayland->ibus_pending_commit)
+  {
+    g_string_free (wayland->ibus_pending_commit, TRUE);
+    wayland->ibus_pending_commit = NULL;
+  }
 
   if (wayland->wic)
     g_object_unref (wayland->wic);
