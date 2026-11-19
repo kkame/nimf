@@ -1,6 +1,6 @@
 # Nimf Input Method Framework
 
-[![Build Status](https://github.com/hamonikr/nimf/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/hamonikr/nimf/actions/workflows/build.yml)
+[![Build Status](https://github.com/kkame/nimf/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/kkame/nimf/actions/workflows/build.yml)
 [![Donate Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://ko.liberapay.com/hamonikr/)
 
 ![version](https://img.shields.io/badge/version-1.4.21-blue)
@@ -66,27 +66,35 @@ Nimf is maintained by the **HamoniKR Team** as a continuation of the original ni
 
 ## 🚀 Installation
 
-### Automatic Installation (Recommended)
+### APT Repository (Ubuntu 24.04 / 26.04 & Debian 12 / 13)
+
+```bash
+curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
+echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
+sudo apt update && sudo apt install -y nimf
+```
+
+### Automatic Installation (Quick Install Script)
 
 Install the latest version with a single command on all supported distributions:
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo bash
+curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install | sudo bash
 
 # Or using wget  
-wget -qO- https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo -E bash -
+wget -qO- https://raw.githubusercontent.com/kkame/nimf/master/install | sudo -E bash -
 ```
 
 **This script automatically:**
 - ✅ Detects your distribution and installs the appropriate package
-- ✅ **Handles ibus conflicts** (disables ibus-daemon if present)  
+- ✅ **Handles ibus conflicts** (keeps `ibus-daemon` active on GNOME Wayland for `zwp_text_input_v3` bridge, disables on X11)
 - ✅ Configures environment variables for all desktop environments
 - ✅ Sets Nimf as the default input method
 
 ### Manual Installation
 
-For advanced users who prefer manual installation, download the appropriate package from [Releases](https://github.com/hamonikr/nimf/releases) and install using your distribution's package manager.
+For advanced users who prefer manual installation, download the appropriate package from [Releases](https://github.com/kkame/nimf/releases) and install using your distribution's package manager.
 
 **Examples:**
 ```bash

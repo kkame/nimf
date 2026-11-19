@@ -878,7 +878,7 @@ nimf_wayland_ibus_try_connect (NimfWayland *wayland)
                                   "org.freedesktop.IBus.Nimf",
                                   "Nimf Wayland Bridge",
                                   PACKAGE_VERSION, "LGPL", "Nimf",
-                                  "https://github.com/hamonikr/nimf",
+                                  "https://github.com/kkame/nimf",
                                   "", "nimf", &op_arr, &eng_arr);
 
   GVariant *res;

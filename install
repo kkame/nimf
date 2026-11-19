@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # Nimf Input Method Framework Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo bash
-# Alternative: wget -qO- https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo -E bash -
+# Usage: curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install | sudo bash
+# Alternative: wget -qO- https://raw.githubusercontent.com/kkame/nimf/master/install | sudo -E bash -
 #
 # SECURITY NOTE: This script will download and install packages from GitHub releases.
 # Only run this script if you trust the source. For maximum security, download and
-# inspect the script first: curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install > install.sh
+# inspect the script first: curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install > install.sh
 #
 # By default, this script automatically handles ibus conflicts (safest option).
 # For interactive installation (ask about ibus handling):
-#   curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo NIMF_INTERACTIVE=1 bash
-#   wget -qO- https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo -E NIMF_INTERACTIVE=1 bash -
+#   curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install | sudo NIMF_INTERACTIVE=1 bash
+#   wget -qO- https://raw.githubusercontent.com/kkame/nimf/master/install | sudo -E NIMF_INTERACTIVE=1 bash -
 
 set -e
 
@@ -22,7 +22,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # GitHub repository information
-GITHUB_REPO="hamonikr/nimf"
+GITHUB_REPO="kkame/nimf"
 GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 GITHUB_RELEASES="${GITHUB_API}/releases/latest"
 
@@ -168,14 +168,13 @@ install_debian() {
             fi
             ;;
         ubuntu|linuxmint|elementary|pop|hamonikr)
-            pkg_suffix="ubuntu.2404"  # Use Ubuntu 24.04 packages as default
-            # ARM64 support check for Ubuntu
-            if [[ "$pkg_arch" == "arm64" ]]; then
-                pkg_suffix="ubuntu.2404.arm64"
-            fi
-            # Ubuntu 24.10 (questing) support - use 24.04 packages for compatibility
-            if [[ "$OS_CODENAME" == "questing" ]]; then
-                pkg_suffix="ubuntu.2404"
+            if [[ "$OS_VERSION" == "26.04"* ]] || [[ "$OS_CODENAME" == "resolute" ]]; then
+                pkg_suffix="ubuntu.2604"
+                if [[ "$pkg_arch" == "arm64" ]]; then
+                    pkg_suffix="ubuntu.2604.arm64"
+                fi
+            else
+                pkg_suffix="ubuntu.2404"  # Use Ubuntu 24.04 packages as default
                 if [[ "$pkg_arch" == "arm64" ]]; then
                     pkg_suffix="ubuntu.2404.arm64"
                 fi
@@ -507,6 +506,23 @@ install_arch() {
 
 # Function to handle ibus conflicts
 handle_ibus_conflict() {
+    # On GNOME/Wayland, Nimf bridges Wayland zwp_text_input_v3 through the IBus D-Bus bus.
+    # Keeping ibus-daemon intact is required for native Wayland & Electron apps.
+    local session_type="${XDG_SESSION_TYPE:-}"
+    if [ -z "$session_type" ] && [ -n "${SUDO_USER:-}" ]; then
+        session_type=$(loginctl list-sessions --no-legend 2>/dev/null | awk -v u="$SUDO_USER" '$3==u {print $1; exit}' | xargs -r loginctl show-session -p Type --value 2>/dev/null || true)
+    fi
+
+    if [ "$session_type" = "wayland" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        print_info "Wayland session detected: keeping ibus-daemon enabled for Nimf Wayland (zwp_text_input_v3) bridge."
+        # Restore ibus-daemon if previously disabled by an older install script
+        if [ ! -f /usr/bin/ibus-daemon ] && [ -f /usr/bin/ibus-daemon.bak ]; then
+            mv /usr/bin/ibus-daemon.bak /usr/bin/ibus-daemon
+            print_success "Restored /usr/bin/ibus-daemon for Wayland support"
+        fi
+        return 0
+    fi
+
     # Check if ibus-daemon exists and is running
     if command -v ibus-daemon &> /dev/null; then
         print_info "Detected ibus-daemon which may conflict with Nimf"

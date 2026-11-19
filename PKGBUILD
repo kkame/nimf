@@ -5,7 +5,7 @@ pkgver=1.4.21
 pkgrel=1
 pkgdesc="Nimf is an input method framework."
 arch=('any')
-url="https://github.com/hamonikr/nimf"
+url="https://github.com/kkame/nimf"
 license=('LGPL3')
 makedepends=('binutils' 'autoconf' 'automake' 'gcc' 'make' 'glib2' 'glib2-devel' 'intltool'
              'gtk3' 'qt5-base' 'qt6-base' 'libappindicator-gtk3' 'libayatana-appindicator' 'librsvg'
@@ -18,7 +18,7 @@ provides=('nimf-git')
 conflicts=('nimf-git')         
 optdepends=('brise: Rime schema repository'
             'noto-fonts-cjk: Google Noto CJK fonts')
-source=("git+https://github.com/hamonikr/nimf.git#tag=v${pkgver}")
+source=("git+https://github.com/kkame/nimf.git#tag=v${pkgver}")
 md5sums=('SKIP')
 
 build() {

@@ -1,48 +1,74 @@
-name: Multi-Platform Release with Docker Build
+name: Multi-Platform Release & APT Repository
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag name (e.g. v1.4.21)"
+        required: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  # 통합 빌드 job - 모든 플랫폼을 한 번에 빌드
   build-packages:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours for ARM64 builds
+    timeout-minutes: 360
     strategy:
+      fail-fast: false
       matrix:
         include:
           # x86_64 builds
           - dockerfile: debian.bookworm.Dockerfile
             platform: debian.bookworm
             arch: amd64
+            apt_suite: bookworm
           - dockerfile: debian.trixie.Dockerfile
             platform: debian.trixie
             arch: amd64
+            apt_suite: trixie
           - dockerfile: ubuntu.2404.Dockerfile
             platform: ubuntu.2404
             arch: amd64
+            apt_suite: noble
+          - dockerfile: ubuntu.2604.Dockerfile
+            platform: ubuntu.2604
+            arch: amd64
+            apt_suite: resolute
           - dockerfile: fedora.40.Dockerfile
             platform: fedora.40
             arch: amd64
+            apt_suite: ""
           - dockerfile: fedora.latest.Dockerfile
             platform: fedora.latest
             arch: amd64
+            apt_suite: ""
           - dockerfile: arch.Dockerfile
             platform: arch
             arch: amd64
-          # ARM64 builds (with increased timeout)
+            apt_suite: ""
+          # ARM64 builds
           - dockerfile: debian.bookworm.arm64.Dockerfile
             platform: debian.bookworm.arm64
             arch: arm64
+            apt_suite: bookworm
           - dockerfile: debian.trixie.arm64.Dockerfile
             platform: debian.trixie.arm64
             arch: arm64
+            apt_suite: trixie
           - dockerfile: ubuntu.2404.arm64.Dockerfile
             platform: ubuntu.2404.arm64
             arch: arm64
-
+            apt_suite: noble
+          - dockerfile: ubuntu.2604.arm64.Dockerfile
+            platform: ubuntu.2604.arm64
+            arch: arm64
+            apt_suite: resolute
 
     steps:
       - name: Checkout source code
@@ -60,28 +86,16 @@ jobs:
 
       - name: Build packages with docker build script
         run: |
-          # 개선된 빌드 스크립트 사용
           chmod +x scripts/build-docker.sh
-          
-          # Dockerfile 이름에서 .Dockerfile 확장자 제거
           DOCKERFILE_NAME="${{ matrix.dockerfile }}"
           PLATFORM_NAME="${DOCKERFILE_NAME%.Dockerfile}"
-          
           echo "Building packages for platform: $PLATFORM_NAME (architecture: ${{ matrix.arch }})"
-          
-          # ARM64 빌드의 경우 추가 설정
           if [[ "${{ matrix.arch }}" == "arm64" ]]; then
-            echo "Setting up ARM64 build environment..."
-            # Docker에서 ARM64 빌드를 위한 환경 설정
             export DOCKER_CLI_EXPERIMENTAL=enabled
           fi
-          
           ./scripts/build-docker.sh "$PLATFORM_NAME"
-          
-          # 생성된 패키지 확인
           echo "=== Generated packages for $PLATFORM_NAME ==="
           find dist/ -name "*" -type f | sort
-          ls -la dist/$PLATFORM_NAME/ || echo "No packages found for $PLATFORM_NAME"
 
       - name: Upload platform artifacts
         uses: actions/upload-artifact@v4
@@ -90,11 +104,10 @@ jobs:
           path: dist/${{ matrix.platform }}/*
           retention-days: 1
 
-  # 릴리즈 생성
   create-release:
     needs: build-packages
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -108,26 +121,20 @@ jobs:
       - name: Organize packages for release
         run: |
           mkdir -p final-packages
-          
-          # 각 플랫폼별 패키지를 final-packages에 정리
+
           for platform_dir in release-packages/packages-*; do
             if [ -d "$platform_dir" ]; then
               platform_name=$(basename "$platform_dir" | sed 's/packages-//')
               echo "Processing platform: $platform_name"
-              
-              # 플랫폼별 패키지를 final-packages로 복사하면서 플랫폼 이름 추가
+
               find "$platform_dir" -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.pkg.tar.*" \) | while read file; do
                 filename=$(basename "$file")
-                # 파일명에 플랫폼 정보가 없으면 추가
                 if [[ ! "$filename" =~ (fc42|opensuse|ubuntu|debian|arch) ]]; then
-                  # 파일 확장자 처리 (.deb, .rpm, .pkg.tar.zst 등)
                   if [[ "$filename" == *.pkg.tar.* ]]; then
-                    # Arch 패키지의 경우 (.pkg.tar.zst, .pkg.tar.xz 등)
                     base_name="${filename%.pkg.tar.*}"
                     ext="pkg.tar.${filename##*.pkg.tar.}"
                     new_filename="${base_name}-${platform_name}.${ext}"
                   else
-                    # 일반적인 확장자 (.deb, .rpm 등)
                     ext="${filename##*.}"
                     name="${filename%.*}"
                     new_filename="${name}-${platform_name}.${ext}"
@@ -140,76 +147,177 @@ jobs:
               done
             fi
           done
-          
-          # 결과 확인
-          echo "=== Final packages for release ==="
+
           ls -la final-packages/ || echo "No packages found"
-          echo "Total packages: $(find final-packages/ -type f | wc -l)"
 
       - name: Generate release notes
-        id: release-notes
         run: |
-          # 동적으로 릴리즈 노트 생성 (자동 설치 스크립트)
           cat > release-body.md << 'EOF'
-          
-          ## 🚀 Quick Install (Recommended)
-          
-          Install the latest version with a single command on all supported distributions:
-          
-          ```bash
-          # Using curl
-          curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo bash
-          
-          # Or using wget
-          wget -qO- https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo -E bash -
-          ```
-          
-          This script automatically:
-          - Detects your distribution and installs the appropriate package
-          - Handles ibus conflicts (disables ibus-daemon if present)  
-          - Configures environment variables for all desktop environments
-          - Sets Nimf as the default input method
-          
-          **Supported Distributions & Architectures:**
-          - Ubuntu 24.04+ / Debian 12+ (Bookworm/Trixie) - x86_64, ARM64
-          - Fedora 33+ / CentOS / RHEL - x86_64, ARM64
-          - Arch Linux / Manjaro - x86_64, ARM64
 
-          > openSUSE packages are temporarily excluded from this release because the
-          > upstream dependency solver is currently unstable in CI. They will return
-          > once the build is pinned or stabilized.
-          
+          ## 🚀 APT Repository Install (Ubuntu / Debian Recommended)
+
+          Add the GitHub Pages APT repository once, and keep Nimf updated automatically via `apt upgrade`:
+
+          ```bash
+          curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
+          echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
+          sudo apt update && sudo apt install -y nimf
+          ```
+
           ---
-          
-          ## 📦 Manual Package Installation
-          
-          If you prefer manual installation, download the appropriate package for your distribution from the assets below and install using your package manager.
-          
-          **Note:** Manual installation requires additional configuration steps. The automatic installation script above is recommended for most users.
-          
+
+          ## ⚡ Quick Install Script
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install | sudo bash
+          ```
+
+          **Supported Distributions & Architectures:**
+          - Ubuntu 24.04 (Noble) / 26.04 (Resolute) - x86_64, ARM64
+          - Debian 12 (Bookworm) / 13 (Trixie) - x86_64, ARM64
+          - Fedora / Arch Linux - x86_64
+
           EOF
-          
-          echo "Generated release notes:"
-          cat release-body.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: final-packages/*
-          name: Release ${{ github.ref_name }}
+          name: Release ${{ inputs.tag || github.ref_name }}
           body_path: release-body.md
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release Summary
+  publish-apt-repo:
+    needs: build-packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout existing gh-pages (if any)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: apt-repo
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-packages/
+          merge-multiple: false
+
+      - name: Install APT repository tools
         run: |
-          echo "🎉 Release ${{ github.ref_name }} created successfully!"
-          echo "📦 Packages included:"
-          find final-packages/ -type f | while read file; do
-            filename=$(basename "$file")
-            size=$(du -h "$file" | cut -f1)
-            echo "  - $filename ($size)"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends dpkg-dev apt-utils gnupg
+
+      - name: Import GPG key
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          if [ -z "$APT_GPG_PRIVATE_KEY" ]; then
+            echo "::error::Missing secret APT_GPG_PRIVATE_KEY. See docs/APT_REPO_SETUP.md to configure GPG signing."
+            exit 1
+          fi
+          mkdir -p apt-repo
+          echo "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
+          KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/ {print $5; exit}')
+          echo "GPG_KEY_ID=$KEY_ID" >> "$GITHUB_ENV"
+          gpg --armor --export "$KEY_ID" > apt-repo/gpg.key
+
+      - name: Build APT repository metadata
+        env:
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+        run: |
+          mkdir -p apt-repo
+
+          declare -A SUITE_MAP=(
+            ["ubuntu.2404"]="noble"
+            ["ubuntu.2404.arm64"]="noble"
+            ["ubuntu.2604"]="resolute"
+            ["ubuntu.2604.arm64"]="resolute"
+            ["debian.bookworm"]="bookworm"
+            ["debian.bookworm.arm64"]="bookworm"
+            ["debian.trixie"]="trixie"
+            ["debian.trixie.arm64"]="trixie"
+          )
+
+          for platform_dir in release-packages/packages-*; do
+            [ -d "$platform_dir" ] || continue
+            platform_name=$(basename "$platform_dir" | sed 's/packages-//')
+            suite="${SUITE_MAP[$platform_name]:-}"
+            [ -n "$suite" ] || continue
+
+            if [[ "$platform_name" == *".arm64" ]]; then
+              arch="arm64"
+            else
+              arch="amd64"
+            fi
+
+            pool_dir="apt-repo/pool/${suite}/main/${arch}"
+            mkdir -p "$pool_dir"
+            find "$platform_dir" -type f -name "*.deb" -exec cp {} "$pool_dir/" \;
           done
-          echo "🔗 Release URL: https://github.com/hamonikr/nimf/releases/tag/${{ github.ref_name }}"
+
+          cd apt-repo
+          for suite in noble resolute bookworm trixie; do
+            [ -d "pool/${suite}/main" ] || continue
+
+            archs=()
+            for arch in amd64 arm64; do
+              pool_dir="pool/${suite}/main/${arch}"
+              [ -d "$pool_dir" ] || continue
+              archs+=("$arch")
+
+              bin_dir="dists/${suite}/main/binary-${arch}"
+              mkdir -p "$bin_dir"
+              dpkg-scanpackages --multiversion --arch "$arch" "$pool_dir" > "${bin_dir}/Packages"
+              gzip -kf9 "${bin_dir}/Packages"
+            done
+
+            [ ${#archs[@]} -gt 0 ] || continue
+
+            apt-ftparchive \
+              -o APT::FTPArchive::Release::Origin="kkame-nimf" \
+              -o APT::FTPArchive::Release::Label="Nimf Input Method Framework" \
+              -o APT::FTPArchive::Release::Suite="${suite}" \
+              -o APT::FTPArchive::Release::Codename="${suite}" \
+              -o APT::FTPArchive::Release::Architectures="${archs[*]}" \
+              -o APT::FTPArchive::Release::Components="main" \
+              release "dists/${suite}" > "dists/${suite}/Release"
+
+            GPG_OPTS=(--batch --yes --pinentry-mode loopback --local-user "$GPG_KEY_ID" --digest-algo SHA256)
+            if [ -n "$APT_GPG_PASSPHRASE" ]; then
+              GPG_OPTS+=(--passphrase "$APT_GPG_PASSPHRASE")
+            fi
+
+            gpg "${GPG_OPTS[@]}" -abs -o "dists/${suite}/Release.gpg" "dists/${suite}/Release"
+            gpg "${GPG_OPTS[@]}" --clearsign -o "dists/${suite}/InRelease" "dists/${suite}/Release"
+          done
+
+          cat > index.html << 'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head><meta charset="utf-8"><title>Nimf APT Repository (kkame/nimf)</title></head>
+          <body style="font-family: sans-serif; max-width: 780px; margin: 2rem auto; line-height: 1.6;">
+            <h1>Nimf APT Repository</h1>
+            <p>Ubuntu (24.04 Noble / 26.04 Resolute) &amp; Debian (12 Bookworm / 13 Trixie) APT repository for <a href="https://github.com/kkame/nimf">kkame/nimf</a>.</p>
+            <pre><code>curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
+          echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
+          sudo apt update &amp;&amp; sudo apt install -y nimf</code></pre>
+          </body>
+          </html>
+          HTML
+
+      - name: Deploy APT repository to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apt-repo
+          publish_branch: gh-pages
+          force_orphan: false
+          keep_files: false

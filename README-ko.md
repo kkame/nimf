@@ -94,16 +94,26 @@ Nimf는 가볍고 빠르며 확장 가능한 입력기 프레임워크입니다.
 
 ## 🚀 설치 방법
 
-### 자동 설치 (권장)
+### APT 저장소 설치 (Ubuntu 24.04 / 26.04, Debian 12 / 13 권장)
+
+최초 1회 저장소를 등록하면 이후 `sudo apt upgrade`로 자동 업데이트됩니다:
+
+```bash
+curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
+echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
+sudo apt update && sudo apt install -y nimf
+```
+
+### 자동 설치 스크립트
 
 한 줄 명령으로 최신 버전을 설치합니다:
 
 ```bash
 # curl 사용
-curl -fsSL https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo bash
+curl -fsSL https://raw.githubusercontent.com/kkame/nimf/master/install | sudo bash
 
 # 또는 wget 사용
-wget -qO- https://raw.githubusercontent.com/hamonikr/nimf/master/install | sudo -E bash -
+wget -qO- https://raw.githubusercontent.com/kkame/nimf/master/install | sudo -E bash -
 ```
 
 이 스크립트는 자동으로:

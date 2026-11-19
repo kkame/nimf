@@ -7,7 +7,7 @@ Version:  1.4.21
 Release:  2%{?dist}.%{?os_id}
 License:  LGPLv3+
 Group:    User Interface/Desktops
-URL:      https://github.com/hamonikr/nimf
+URL:      https://github.com/kkame/nimf
 Source0:  %{name}-%{version}.tar.gz
 
 BuildRequires: gcc-c++

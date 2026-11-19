@@ -22,6 +22,8 @@ AVAILABLE_DOCKERFILES=(
     "ubuntu.2204.Dockerfile"
     "ubuntu.2404.Dockerfile" 
     "ubuntu.2404.arm64.Dockerfile"
+    "ubuntu.2604.Dockerfile"
+    "ubuntu.2604.arm64.Dockerfile"
     "debian.bookworm.Dockerfile"
     "debian.bookworm.arm64.Dockerfile"
     "debian.trixie.Dockerfile"
