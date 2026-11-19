@@ -73,6 +73,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up QEMU for multi-platform builds
         if: matrix.arch == 'arm64'
@@ -111,6 +113,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -151,20 +155,55 @@ jobs:
           ls -la final-packages/ || echo "No packages found"
 
       - name: Generate release notes
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          cat > release-body.md << 'EOF'
+          VERSION="${RELEASE_TAG#v}"
+
+          {
+            echo "## 📝 변경 사항 (What's Changed)"
+            echo ""
+            CHANGELOG_BLOCK=$(awk -v ver="$VERSION" '
+              $0 ~ "^nimf \\(" ver "\\)" { in_block=1; next }
+              in_block && /^ -- / { exit }
+              in_block && /^[[:space:]]+\*/ { sub(/^[[:space:]]+\*[[:space:]]*/, "- "); print; next }
+              in_block && /^[[:space:]]+-/ { sub(/^[[:space:]]+/, "  "); print; next }
+            ' debian/changelog | grep -v "^- Release v${VERSION}$" || true)
+
+            if [ -n "$CHANGELOG_BLOCK" ]; then
+              echo "$CHANGELOG_BLOCK"
+            fi
+
+            PREV_TAG=$(git tag -l 'v*' --sort=-v:refname | awk -v cur="$RELEASE_TAG" 'found{print; exit} $0==cur{found=1}')
+            if [ -n "$PREV_TAG" ]; then
+              COMMITS=$(git log "${PREV_TAG}..${RELEASE_TAG}" --no-merges --pretty=format:"- %s (%h)" | grep -v "chore: bump version to" || true)
+              if [ -n "$COMMITS" ]; then
+                echo ""
+                echo "### Commits (${PREV_TAG}...${RELEASE_TAG})"
+                echo "$COMMITS"
+              fi
+            fi
+
+            cat << 'EOF'
+
+          ---
 
           ## 🚀 APT Repository Install (Ubuntu / Debian Recommended)
 
           Add the GitHub Pages APT repository once, and keep Nimf updated automatically via `apt upgrade`:
 
           ```bash
-          curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/kkame-nimf.gpg
-          echo "deb [signed-by=/usr/share/keyrings/kkame-nimf.gpg] https://kkame.github.io/nimf $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/kkame-nimf.list
-          sudo apt update && sudo apt install -y nimf
+          curl -fsSL https://kkame.github.io/nimf/gpg.key | sudo gpg --dearmor --yes -o /usr/share/keyrings/kkame-nimf.gpg
+          sudo tee /etc/apt/sources.list.d/kkame-nimf.sources > /dev/null <<EOT
+          Types: deb
+          URIs: https://kkame.github.io/nimf
+          Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+          Components: main
+          Architectures: $(dpkg --print-architecture)
+          Signed-By: /usr/share/keyrings/kkame-nimf.gpg
+          EOT
+          sudo apt update && sudo apt install -y nimf nimf-i18n
           ```
-
-          ---
 
           ## ⚡ Quick Install Script
 
@@ -176,8 +215,10 @@ jobs:
           - Ubuntu 24.04 (Noble) / 26.04 (Resolute) - x86_64, ARM64
           - Debian 12 (Bookworm) / 13 (Trixie) - x86_64, ARM64
           - Fedora / Arch Linux - x86_64
-
           EOF
+          } | sed 's/^          //' > release-body.md
+
+          cat release-body.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -350,6 +350,133 @@
       border: 1px solid rgba(56, 189, 248, 0.22);
     }
 
+    /* Releases timeline */
+    .release-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .release-item {
+      padding: 18px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(148, 163, 184, 0.05);
+      transition: border-color 0.15s ease;
+    }
+
+    .release-item:hover {
+      border-color: var(--border-strong);
+    }
+
+    .release-item.latest {
+      border-color: rgba(56, 189, 248, 0.32);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.07), rgba(129, 140, 248, 0.05));
+    }
+
+    .release-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .release-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .release-version {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .release-version:hover {
+      color: var(--accent);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+
+    .pill.latest {
+      background: rgba(52, 211, 153, 0.16);
+      color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+
+    .pill.tag-fix {
+      background: rgba(251, 146, 60, 0.14);
+      color: #fb923c;
+      border: 1px solid rgba(251, 146, 60, 0.3);
+    }
+
+    .pill.tag-feat {
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .release-date {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .release-link {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .release-link:hover {
+      text-decoration: underline;
+    }
+
+    .release-changes {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .release-changes li {
+      position: relative;
+      padding-left: 16px;
+    }
+
+    .release-changes li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .release-changes code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82em;
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--text);
+    }
+
     footer {
       margin-top: 40px;
       text-align: center;
@@ -492,6 +619,67 @@ sudo apt update</pre>
       </div>
     </section>
 
+    <!-- Releases & Changelog -->
+    <section class="card" id="releases">
+      <div class="card-header">
+        <h2 class="card-title"><span class="step-num">3</span> 릴리즈 내역 및 변경사항</h2>
+        <a class="release-link" href="https://github.com/kkame/nimf/releases">전체 릴리즈 보기 →</a>
+      </div>
+      <p class="card-desc">
+        <code>kkame/nimf</code> 포크의 <code>v1.4.20</code> 이후 주요 변경사항입니다. 최신 릴리즈 정보는 GitHub Releases와 자동으로 동기화됩니다.
+      </p>
+      <div class="release-list" id="release-list">
+        <article class="release-item latest" data-tag="v1.4.22">
+          <div class="release-head">
+            <div class="release-meta">
+              <a class="release-version" href="https://github.com/kkame/nimf/releases/tag/v1.4.22">v1.4.22</a>
+              <span class="pill latest">Latest</span>
+              <span class="pill tag-fix">끝글자 버그 수정</span>
+              <span class="release-date">2026-11-19</span>
+            </div>
+            <a class="release-link" href="https://github.com/kkame/nimf/releases/tag/v1.4.22">GitHub Release ↗</a>
+          </div>
+          <ul class="release-changes">
+            <li>3초마다 무조건 <code>SetGlobalEngine("nimf")</code>를 재호출하던 타이머를 <code>GlobalEngine</code> 상태 확인 방식으로 변경해, 조합 중 입력이 끊기는 문제 해결</li>
+            <li><code>UpdatePreeditText</code>에 <code>IBUS_ENGINE_PREEDIT_COMMIT</code> 모드 및 <code>Reset</code>/<code>FocusOut</code> 조용한 동기화를 적용해 마우스 클릭·포커스 전환 시 끝글자 유실/점프 해결</li>
+            <li>한 키 이벤트 내 복수 커밋(한글 + <code>.</code>, <code>,</code>, <code>?</code> 등 문장부호 및 <code>Space</code>/ASCII)을 단일 <code>CommitText</code>로 병합해 Wayland <code>zwp_text_input_v3</code> 끝글자 증발·밀림 해결</li>
+            <li><code>nimf-libhangul</code> preedit 속성 <code>end_index</code>를 바이트 길이에서 UTF-8 문자 수(<code>g_utf8_strlen</code>)로 수정하고 GNOME Shell용 <code>IBUS_ATTR_TYPE_HINT</code> 추가</li>
+          </ul>
+        </article>
+
+        <article class="release-item" data-tag="v1.4.21">
+          <div class="release-head">
+            <div class="release-meta">
+              <a class="release-version" href="https://github.com/kkame/nimf/releases/tag/v1.4.21">v1.4.21</a>
+              <span class="pill tag-feat">Wayland 설정 · APT</span>
+              <span class="release-date">2026-11-19</span>
+            </div>
+            <a class="release-link" href="https://github.com/kkame/nimf/releases/tag/v1.4.21">GitHub Release ↗</a>
+          </div>
+          <ul class="release-changes">
+            <li>Wayland 환경의 <code>nimf-settings</code>에서 <code>evdev.xml</code>을 직접 파싱해 XKB 옵션(한/영·한자 키 등)이 정상 표시·적용되도록 개선</li>
+            <li>Ubuntu 24.04(Noble) / 26.04(Resolute) 및 Debian 12 / 13용 GPG 서명 GitHub Pages APT 저장소 및 CI 자동 배포 파이프라인 구축</li>
+            <li><code>install</code> 스크립트와 APT 저장소 랜딩 페이지(<code>https://kkame.github.io/nimf</code>) 정비</li>
+          </ul>
+        </article>
+
+        <article class="release-item" data-tag="v1.4.20">
+          <div class="release-head">
+            <div class="release-meta">
+              <a class="release-version" href="https://github.com/kkame/nimf/releases/tag/v1.4.20">v1.4.20</a>
+              <span class="pill tag-feat">GNOME Wayland</span>
+              <span class="release-date">2026-11-19</span>
+            </div>
+            <a class="release-link" href="https://github.com/kkame/nimf/releases/tag/v1.4.20">GitHub Release ↗</a>
+          </div>
+          <ul class="release-changes">
+            <li><code>libnimf-wayland</code>에 GNOME Wayland(<code>zwp_text_input_v3</code>) ↔ IBus D-Bus 브릿지를 내장해 X11 강제 전환 없이 네이티브 Wayland·Electron(Slack, Orca)·JetBrains IDE 한글 입력 지원</li>
+            <li>GTK3 IM 모듈(<code>im-nimf</code>)에서 <code>wayland</code>/<code>ibus</code> 컨텍스트 호환성 추가</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
     <footer>
       Maintained at <a href="https://github.com/kkame/nimf">github.com/kkame/nimf</a> · Signed with GPG key
       <code>0A4CA33368AAF3D2</code>
@@ -538,6 +726,95 @@ sudo apt update</pre>
         }, 1800);
       });
     });
+
+    // Progressive enhancement: append any newer GitHub Releases (>= v1.4.20) automatically
+    (async function syncNewReleases() {
+      const listEl = document.getElementById('release-list');
+      if (!listEl) return;
+
+      const parseVer = (tag) => {
+        const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(tag || '');
+        return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+      };
+      const cmpVer = (a, b) => (a[0] - b[0]) || (a[1] - b[1]) || (a[2] - b[2]);
+      const minVer = [1, 4, 20];
+
+      const escapeHtml = (s) =>
+        s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      const formatInline = (s) =>
+        escapeHtml(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      const extractChanges = (body) => {
+        if (!body) return [];
+        const lines = body.split(/\r?\n/);
+        const items = [];
+        for (const raw of lines) {
+          const line = raw.trim();
+          if (line.startsWith('---') || /^##\s+🚀/.test(line) || /^##\s+⚡/.test(line)) break;
+          if (/^[-*]\s+/.test(line)) {
+            items.push(line.replace(/^[-*]\s+/, ''));
+          }
+        }
+        return items.slice(0, 8);
+      };
+
+      try {
+        const resp = await fetch('https://api.github.com/repos/kkame/nimf/releases?per_page=15', {
+          headers: { Accept: 'application/vnd.github+json' }
+        });
+        if (!resp.ok) return;
+        const releases = await resp.json();
+        if (!Array.isArray(releases)) return;
+
+        const existingTags = new Set(
+          Array.from(listEl.querySelectorAll('[data-tag]')).map((el) => el.dataset.tag)
+        );
+
+        const newer = releases.filter((r) => {
+          if (r.draft || existingTags.has(r.tag_name)) return false;
+          const v = parseVer(r.tag_name);
+          return v && cmpVer(v, minVer) >= 0;
+        });
+
+        if (newer.length === 0) return;
+
+        // Sort descending by semver and insert above existing cards
+        newer.sort((a, b) => cmpVer(parseVer(b.tag_name), parseVer(a.tag_name)));
+
+        const topExisting = listEl.querySelector('.release-item.latest');
+        if (topExisting && cmpVer(parseVer(newer[0].tag_name), parseVer(topExisting.dataset.tag)) > 0) {
+          topExisting.classList.remove('latest');
+          const oldPill = topExisting.querySelector('.pill.latest');
+          if (oldPill) oldPill.remove();
+        }
+
+        newer.forEach((rel, idx) => {
+          const changes = extractChanges(rel.body);
+          if (changes.length === 0) return;
+          const date = (rel.published_at || '').slice(0, 10);
+          const isLatest = idx === 0 && (!topExisting || cmpVer(parseVer(rel.tag_name), parseVer(topExisting.dataset.tag)) > 0);
+          const art = document.createElement('article');
+          art.className = 'release-item' + (isLatest ? ' latest' : '');
+          art.dataset.tag = rel.tag_name;
+          art.innerHTML =
+            '<div class="release-head">' +
+              '<div class="release-meta">' +
+                '<a class="release-version" href="' + escapeHtml(rel.html_url) + '">' + escapeHtml(rel.tag_name) + '</a>' +
+                (isLatest ? '<span class="pill latest">Latest</span>' : '') +
+                (date ? '<span class="release-date">' + escapeHtml(date) + '</span>' : '') +
+              '</div>' +
+              '<a class="release-link" href="' + escapeHtml(rel.html_url) + '">GitHub Release ↗</a>' +
+            '</div>' +
+            '<ul class="release-changes">' +
+              changes.map((c) => '<li>' + formatInline(c) + '</li>').join('') +
+            '</ul>';
+          listEl.insertBefore(art, listEl.firstChild);
+        });
+      } catch {
+        // Keep static embedded release notes on network/rate-limit error
+      }
+    })();
   </script>
 </body>
 </html>
