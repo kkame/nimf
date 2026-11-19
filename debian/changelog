@@ -1,3 +1,10 @@
+nimf (1.4.21) stable; urgency=medium
+
+  * Release v1.4.21
+  * Load XKB options from evdev.xml in nimf-settings on Wayland
+
+ -- HamoniKR <pkg@hamonikr.org>  Thu, 19 Nov 2026 20:31:00 +0900
+
 nimf (1.4.20) stable; urgency=medium
 
   * Release v1.4.20
