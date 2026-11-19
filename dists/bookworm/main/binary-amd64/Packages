@@ -35,6 +35,43 @@ Description: Modern Input Method Framework
  This package provides the core Nimf framework and the K/J/C input method
  engines (libhangul, anthy, rime).
 
+Package: nimf
+Version: 1.4.22
+Architecture: amd64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 1088
+Depends: libanthy1, libayatana-appindicator3-1 (>= 0.2.96), libc6 (>= 2.34), libgcc-s1 (>= 3.0), libglib2.0-0 (>= 2.67.3), libgtk-3-0 (>= 3.21.5), libgtk-4-1 (>= 4.3.1), libgtk2.0-0 (>= 2.18.0), libhangul1 (>= 0.1.0+git20170815), libpango-1.0-0 (>= 1.14.0), libqt5core5a (>= 5.15.1), libqt5gui5 (>= 5.6.0~beta) | libqt5gui5-gles (>= 5.6.0~beta), libqt5widgets5 (>= 5.0.2), libqt6core6 (>= 6.4.0), libqt6gui6 (>= 6.1.2), libqt6widgets6 (>= 6.1.2), librime1 (>= 1.8.5+dfsg1~), libstdc++6 (>= 5), libwayland-client0 (>= 1.20.0), libx11-6, libxkbcommon0 (>= 0.5.0), libxklavier16 (>= 5.0), qtbase-abi-5-15-8, dconf-gsettings-backend | gsettings-backend, fonts-noto-cjk, anthy, libhangul-data
+Recommends: im-config
+Suggests: nimf-i18n
+Conflicts: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Replaces: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Provides: libnimf1, nimf-anthy, nimf-dev, nimf-libhangul, nimf-rime
+Filename: pool/bookworm/main/amd64/nimf_1.4.22_amd64.deb
+Size: 295992
+MD5sum: f94490afa8ed3912ed46fc53123a86e4
+SHA1: b7251e6283bea32753f6676eb10b9bb191fb518a
+SHA256: 2974acb72c15372a8286a03f43444e6b5095992a45f92ffe38d5bf3da04287e5
+Section: utils
+Priority: optional
+Homepage: https://github.com/hamonikr/nimf
+Description: Modern Input Method Framework
+ Nimf is a lightweight, fast and extensible input method framework that supports
+ various input methods and platforms.
+ .
+ Features:
+  * Lightweight and fast input method framework
+  * Supports GTK2, GTK3, GTK4, Qt5, Qt6
+  * Korean input (libhangul)
+  * Japanese input (anthy)
+  * Chinese input (rime)
+  * Optional multilingual input via separate package `nimf-i18n` (m17n)
+  * System keyboard integration
+  * Wayland support
+  * Modern UI with system tray indicator
+ .
+ This package provides the core Nimf framework and the K/J/C input method
+ engines (libhangul, anthy, rime).
+
 Package: nimf-dbgsym
 Source: nimf
 Version: 1.4.21
@@ -52,6 +89,24 @@ Section: debug
 Priority: optional
 Description: debug symbols for nimf
 Build-Ids: 080b525ffe3f108d722bdcb079a345711ea7f4d4 33eb81669ed2c8e6171c3e9f3de99d41555db114 3804d2e22e03d1e173c116d028c5b40adb0caae2 39b42502b342c654a786f370817060b47da23283 4d09485d447a7dd07c481df374f436633d3e873d 53e0eb140a797f116a3f78bd67079714789bef97 625d7336cfe0a04eda85ede807e7f2394b42ad27 62a38bea7338094780fbb940f472b0119d5ad17c 642b43dab76a527926f0efed6fa3cc3e91798ef1 86f1b2ff74d25ccca891dfaa2dbfc11bdb64ee0e 8f8fea94e178bd96e5c0890aa4b90dde3203aee9 9547231550c26fc9e73b9049e39960cc45087c1a cdcadd4c5246de0574a7e94f7bbc38752a98bfcd da346dc0cb73b9553a794e97d74782d591d66d0a e3cdee81fb6aba756adad332115b1c4527b3346a f16189ec6514388f5e36cb91dcd7ed88d5b11f78 fb14b65c9eede99658545f246218020663bae1c5 fe305570ad58f96bac627e4b7b387d5c54bf7bcb
+
+Package: nimf-dbgsym
+Source: nimf
+Version: 1.4.22
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 1453
+Depends: nimf (= 1.4.22)
+Filename: pool/bookworm/main/amd64/nimf-dbgsym_1.4.22_amd64.deb
+Size: 1254568
+MD5sum: f91e54d515c6468338f922153724a439
+SHA1: 84b3d717620139207e59876c85a90071295e02d0
+SHA256: 5b9b160f078d52d30fb02c4e545f5e4d1b79ca9c39285fb077f46912cb79e9f7
+Section: debug
+Priority: optional
+Description: debug symbols for nimf
+Build-Ids: 080b525ffe3f108d722bdcb079a345711ea7f4d4 33eb81669ed2c8e6171c3e9f3de99d41555db114 3804d2e22e03d1e173c116d028c5b40adb0caae2 39b42502b342c654a786f370817060b47da23283 44c3d1c15b513ef26957cb16677ca93e72995814 4d09485d447a7dd07c481df374f436633d3e873d 62a38bea7338094780fbb940f472b0119d5ad17c 642b43dab76a527926f0efed6fa3cc3e91798ef1 86f1b2ff74d25ccca891dfaa2dbfc11bdb64ee0e 8f8fea94e178bd96e5c0890aa4b90dde3203aee9 9547231550c26fc9e73b9049e39960cc45087c1a c2e0ce10d0751ea10a9100f849222d7fcbc18755 cdcadd4c5246de0574a7e94f7bbc38752a98bfcd d1b84f0997213a186c00d715769854a7eda3bb77 da346dc0cb73b9553a794e97d74782d591d66d0a e3cdee81fb6aba756adad332115b1c4527b3346a f16189ec6514388f5e36cb91dcd7ed88d5b11f78 fb13664821a61abac041cfbc1498039d7f23ae87
 
 Package: nimf-i18n
 Source: nimf
@@ -77,6 +132,30 @@ Description: Additional multilingual engines (m17n) for Nimf
  m17n for Nimf, along with their icons and settings schemas. Install this to
  enable many extra languages beyond Korean, Japanese, and Chinese.
 
+Package: nimf-i18n
+Source: nimf
+Version: 1.4.22
+Architecture: amd64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 2172
+Depends: libc6 (>= 2.4), libglib2.0-0 (>= 2.54), libm17n-0 (>= 1.7.0), nimf (= 1.4.22), dconf-gsettings-backend | gsettings-backend, m17n-db (>= 1.7.0)
+Conflicts: nimf-m17n
+Breaks: nimf (<< 1.3.9)
+Replaces: nimf (<< 1.3.9), nimf-m17n
+Provides: nimf-m17n
+Filename: pool/bookworm/main/amd64/nimf-i18n_1.4.22_amd64.deb
+Size: 857472
+MD5sum: ae85579910b6b35c84044d7485d23481
+SHA1: 96387768f325cc2b871cb35c2098cc7563eed01b
+SHA256: 165ed43d81962c42df877567d3a8b6cb6e21cdc8065e585923ed6935973c9bc4
+Section: utils
+Priority: optional
+Homepage: https://github.com/hamonikr/nimf
+Description: Additional multilingual engines (m17n) for Nimf
+ This package contains additional multilingual input method engines based on
+ m17n for Nimf, along with their icons and settings schemas. Install this to
+ enable many extra languages beyond Korean, Japanese, and Chinese.
+
 Package: nimf-i18n-dbgsym
 Source: nimf
 Version: 1.4.21
@@ -90,6 +169,24 @@ Size: 425708
 MD5sum: 2ace0a88148a093d62819a648c528a54
 SHA1: 2407c003bb9bd0621b2dea6b2a6ca9ddeb7284e1
 SHA256: c615a01aa931af59e877811a25b6b6f354fe46e78577e898bc1e6cb860979593
+Section: debug
+Priority: optional
+Description: debug symbols for nimf-i18n
+Build-Ids: 0260d2689974e6748824636a3ad9ae6f8ec44b3c 155e303466c8035dd41a1cbfa3d5ac4bf0445812 1d1ca4170a6d2a069109ed1bab2b7240f34ad53f 20dc5dddb713e13829cc16901d1cf6543a30b9d0 218953d51d353eaf78b6c94b723cdc04bcd8b858 246d2420f2bc043f3b4142ca3d7b31f47e4a4c59 2c4e3486f06fb2f6fe913b4d4434d0b1ea00f24c 2d660a120d25a4ea06f646081c465ef4cd44c081 30e4aeb3dcec668fe06fe4ac682de10825df1774 3e1bfb464c90727dabcc99935a67980a4007026c 405c1241b2e2fe7bf53cc8556b21b2f844b023fc 42aa90e996e84e99a3fc2d910b80955620ee314a 498ff24e4f892509385aee78be651871f4ae8b95 4cdd76b4d5d16cad4a8016c2e9db693809b96797 5e1f19f52aab4f2071170f84cddc7eb574ab9730 68653994426e064836db826afac5367780c954f8 6cf01e36495a0f86889b1ea2a6cf75285c605bfb 6d9a1aa8efdd80e1b6bd7b1984c956ef92b318b1 708e75b51c6851daca18508226e99090bccdfa99 75e24e1da400bae9998dec327e5a6f6ac78cfec4 766b05c025167b5a0f72f2bf78387902f0471a27 7bd7e3b325316afb74a8fff10244f399f9090dcf 7d2a650c698875f7b560f1700defb6f90be68787 7d88f4951e5dc23a82cd1070a11194dea75332d4 7e950a804cc25280763b31cd52a74ebbf2c4f6f6 83f9956f12ee9ab910ff13b955e4802535680779 867fbb5bffcfa40c8155a52925e87e458798680d 927015edcdcaecc2d5b9e6431e75b9627597925a 9270c54bca922a0aed06b3b8c516791b3881d318 9271b88edd845926353b0fdee5d385b0f61ae735 99f901f06b6d1a42b5727ec7d412bf350a3671e6 9ad7d2dc967ae71003681724a050ddf6ffcf6803 a0f67750ae09737685dcd03a7d8e1f9345a767cc a323c0279cca00f1c1113a1c40fb783497eac34a a45b863a372a9e5a9fb3bce985c6c0971fc2d4a6 a5958eb3c84febdfafce25f10c28f19c6cd812b2 a6e0de3c1e5e1700c9a5a7e7239f3e027417429c a917f4506ec31c0c8df564910a9a9ed6a44cb65d bcfa2306336eaf05047a311b15a7f7262c16bcc0 be6cff66eef4ca51cffc7b3f369dd19a308790cb bee6a029d55ea7f0bfc5d42c7baa2084e9ec730b c00526035a2f43e01ea05a6a70b29d622967d1db c492baf4655ad7d1d017abfe1b9815d9478fd441 cc11c974d64a1477775fa6e937b0d0df1d5c2e97 cd349f86f77bd75a543547ab0ce0759170065010 d5c8d1632632d1562caf3ac66b76021877cf8a60 d6750c92d8b26270c98ddf222b27d3391906ec21 d69c716da52552924bf1c18dcdee99dad2b87758 dd6b97574e7ae2f151da06d770506a2078032c7f e504f00252bd26297d23f2b128dfb78c7bbd6abf e653bd2857993b0b7d2b2801c4dc09654595435a eaec79aa11ae3281471478a6214124b482bb6588 eb32e23cfdbf10afc521e5edb3f961d340f122e1 eb3b5c7e42e208c12b1030a74c1885da13584ecd ee1d2b9c3423ab6dba9742e0bebd4ec234924fe8 ef602bec45bcd6b45ad12a0a722254dd9325887c f26eebbf1380d1c66ff4bd43365d8c78de710b67 f853f2fd24bdb086ec503e7dd97d8ddd6219a317 f8afaaff6add26a580c9812d9e61520b2103455d f95cc923ee3b25318da5df9bcd32afc6a6097bb9 ff154ffb62ac681d1f08681d61d0c16fc28353bc
+
+Package: nimf-i18n-dbgsym
+Source: nimf
+Version: 1.4.22
+Auto-Built-Package: debug-symbols
+Architecture: amd64
+Maintainer: Kevin Kim <chaeya@gmail.com>
+Installed-Size: 930
+Depends: nimf-i18n (= 1.4.22)
+Filename: pool/bookworm/main/amd64/nimf-i18n-dbgsym_1.4.22_amd64.deb
+Size: 425708
+MD5sum: 0f5505e8fd18bd27f34733858a545edc
+SHA1: f5dc24402c98acc0f4f778f6bac67e22adffc178
+SHA256: 46a2f2b87bb3a990417dbc6c8139be7c8c1e6a0e5ee233b3b9344d22a8c617bb
 Section: debug
 Priority: optional
 Description: debug symbols for nimf-i18n
