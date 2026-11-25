@@ -118,6 +118,32 @@ translate_xkey_event (XEvent *xevent)
 }
 
 static gboolean
+is_password_field (NimfGtkIMContext *context)
+{
+#if GTK_CHECK_VERSION (3, 6, 0)
+  GtkInputPurpose purpose;
+  g_object_get (context, "input-purpose", &purpose, NULL);
+  if (purpose == GTK_INPUT_PURPOSE_PASSWORD || purpose == GTK_INPUT_PURPOSE_PIN)
+    return TRUE;
+#endif
+
+  /* GtkEntry can mask its text without setting an input purpose. */
+  gpointer widget = NULL;
+  if (context->client_window)
+    gdk_window_get_user_data (context->client_window, &widget);
+  if (GTK_IS_WIDGET (widget))
+  {
+    if (!GTK_IS_ENTRY (widget))
+    {
+      GtkWidget *top = gtk_widget_get_toplevel (widget);
+      widget = GTK_IS_WINDOW (top) ? gtk_window_get_focus (GTK_WINDOW (top)) : NULL;
+    }
+    return GTK_IS_ENTRY (widget) && !gtk_entry_get_visibility (GTK_ENTRY (widget));
+  }
+  return FALSE;
+}
+
+static gboolean
 nimf_gtk_im_context_filter_keypress (GtkIMContext *context,
                                      GdkEventKey  *event)
 {
@@ -125,6 +151,9 @@ nimf_gtk_im_context_filter_keypress (GtkIMContext *context,
 
   gboolean   retval;
   NimfEvent *nimf_event;
+
+  if (is_password_field (NIMF_GTK_IM_CONTEXT (context)))
+    return gtk_im_context_filter_keypress (NIMF_GTK_IM_CONTEXT (context)->simple, event);
 
   nimf_event = translate_gdk_event_key (event);
   retval = nimf_im_filter_event (NIMF_GTK_IM_CONTEXT (context)->im, nimf_event);
@@ -155,7 +184,8 @@ on_gdk_x_event (XEvent           *xevent,
 
   gboolean retval = FALSE;
 
-  if (context->has_focus == FALSE || context->client_window == NULL)
+  if (context->has_focus == FALSE || context->client_window == NULL ||
+      is_password_field (context))
     return GDK_FILTER_CONTINUE;
 
   switch (xevent->type)
@@ -317,6 +347,9 @@ nimf_gtk_im_context_set_surrounding (GtkIMContext *context,
 {
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 
+  if (is_password_field (NIMF_GTK_IM_CONTEXT (context)))
+    return;
+
   nimf_im_set_surrounding (NIMF_GTK_IM_CONTEXT (context)->im,
                            text, len, g_utf8_strlen (text, cursor_index));
 }
@@ -343,7 +376,8 @@ on_commit (NimfIM           *im,
   if (!NIMF_GTK_IS_IM_CONTEXT (context))
     return;
 
-  g_signal_emit_by_name (context, "commit", text);
+  if (im != context->im || !is_password_field (context))
+    g_signal_emit_by_name (context, "commit", text);
 }
 
 static gboolean

@@ -241,14 +241,15 @@ nimf_wayland_ic_emit_commit (NimfServiceIC *ic,
 
   NimfWayland *wayland = NIMF_WAYLAND_IC (ic)->wayland;
 
-  if (wayland->context)
+  if (wayland->context && !wayland->password_field)
   {
     zwp_input_method_context_v1_commit_string (wayland->context,
                                                wayland->serial,
                                                text);
   }
 
-  if (wayland->ibus_conn && wayland->ibus_engine_path && !wayland->ibus_suppress_signals)
+  if (wayland->ibus_conn && wayland->ibus_engine_path &&
+      !wayland->ibus_suppress_signals && !wayland->ibus_password_field)
   {
     if (wayland->ibus_buffering)
     {
@@ -277,14 +278,15 @@ nimf_wayland_ic_emit_preedit_changed (NimfServiceIC    *ic,
 
   NimfWayland *wayland = NIMF_WAYLAND_IC (ic)->wayland;
 
-  if (wayland->context)
+  if (wayland->context && !wayland->password_field)
   {
     zwp_input_method_context_v1_preedit_cursor (wayland->context, cursor_pos);
     zwp_input_method_context_v1_preedit_string (wayland->context,
                  wayland->serial, preedit_string, preedit_string);
   }
 
-  if (wayland->ibus_conn && wayland->ibus_engine_path && !wayland->ibus_suppress_signals)
+  if (wayland->ibus_conn && wayland->ibus_engine_path &&
+      !wayland->ibus_suppress_signals && !wayland->ibus_password_field)
   {
     if (wayland->ibus_buffering)
     {
@@ -308,7 +310,8 @@ void nimf_wayland_ic_emit_preedit_end (NimfServiceIC *ic)
 
   NimfWayland *wayland = NIMF_WAYLAND_IC (ic)->wayland;
 
-  if (wayland->ibus_conn && wayland->ibus_engine_path && !wayland->ibus_suppress_signals)
+  if (wayland->ibus_conn && wayland->ibus_engine_path &&
+      !wayland->ibus_suppress_signals && !wayland->ibus_password_field)
   {
     if (wayland->ibus_buffering)
     {
@@ -338,7 +341,8 @@ nimf_wayland_ic_emit_delete_surrounding (NimfServiceIC *ic,
 
   NimfWayland *wayland = NIMF_WAYLAND_IC (ic)->wayland;
 
-  if (wayland->ibus_conn && wayland->ibus_engine_path && !wayland->ibus_suppress_signals)
+  if (wayland->ibus_conn && wayland->ibus_engine_path &&
+      !wayland->ibus_suppress_signals && !wayland->ibus_password_field)
   {
     g_dbus_connection_emit_signal (wayland->ibus_conn,
                                    NULL,

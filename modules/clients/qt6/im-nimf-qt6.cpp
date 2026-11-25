@@ -151,6 +151,10 @@ public:
   ~NimfInputContext ();
 
   virtual bool isValid () const;
+  bool hasCapability (Capability capability) const override
+  {
+    return capability != HiddenTextCapability && QPlatformInputContext::hasCapability (capability);
+  }
   virtual void reset ();
   virtual void commit ();
   virtual void update (Qt::InputMethodQueries);
@@ -217,6 +221,9 @@ NimfInputContext::on_preedit_changed (NimfIM *im, gpointer user_data)
 #ifndef USE_DLFCN
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 #endif
+
+  if (!static_cast<NimfInputContext *> (user_data)->inputMethodAccepted ())
+    return;
 
   NimfPreeditAttr **preedit_attrs;
   gchar            *str;
@@ -304,6 +311,9 @@ NimfInputContext::on_commit (NimfIM      *im,
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 #endif
 
+  if (!static_cast<NimfInputContext *> (user_data)->inputMethodAccepted ())
+    return;
+
   QString str = QString::fromUtf8 (text);
   QInputMethodEvent event;
   event.setCommitString (str);
@@ -322,6 +332,9 @@ NimfInputContext::on_retrieve_surrounding (NimfIM *im, gpointer user_data)
 #ifndef USE_DLFCN
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 #endif
+
+  if (!static_cast<NimfInputContext *> (user_data)->inputMethodAccepted ())
+    return FALSE;
 
   QObject *object = qApp->focusObject();
 
@@ -359,6 +372,9 @@ NimfInputContext::on_delete_surrounding (NimfIM   *im,
 #ifndef USE_DLFCN
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 #endif
+
+  if (!static_cast<NimfInputContext *> (user_data)->inputMethodAccepted ())
+    return FALSE;
 
   QObject *object = qApp->focusObject();
 

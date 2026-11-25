@@ -72,6 +72,21 @@ static gboolean nimf_gtk4_im_context_get_surrounding (GtkIMContext *context, gch
 
 G_DEFINE_TYPE (NimfGtk4IMContext, nimf_gtk4_im_context, GTK_TYPE_IM_CONTEXT)
 
+static gboolean
+is_password_field (NimfGtk4IMContext *context)
+{
+  GtkInputPurpose purpose;
+  g_object_get (context, "input-purpose", &purpose, NULL);
+  if (purpose == GTK_INPUT_PURPOSE_PASSWORD || purpose == GTK_INPUT_PURPOSE_PIN)
+    return TRUE;
+
+  GtkWidget *widget = context->key_controller
+                    ? gtk_event_controller_get_widget (context->key_controller) : NULL;
+  return (GTK_IS_TEXT (widget) && !gtk_text_get_visibility (GTK_TEXT (widget))) ||
+         (GTK_IS_ENTRY (widget) && !gtk_entry_get_visibility (GTK_ENTRY (widget))) ||
+         (widget && gtk_widget_get_ancestor (widget, GTK_TYPE_PASSWORD_ENTRY));
+}
+
 /* Signal handlers */
 static void
 on_commit (NimfIM *im, const gchar *text, NimfGtk4IMContext *context)
@@ -85,7 +100,8 @@ on_commit (NimfIM *im, const gchar *text, NimfGtk4IMContext *context)
   if (!NIMF_GTK4_IS_IM_CONTEXT (context))
     return;
 
-  g_signal_emit_by_name (context, "commit", text);
+  if (im != context->im || !is_password_field (context))
+    g_signal_emit_by_name (context, "commit", text);
 }
 
 static void
@@ -208,6 +224,9 @@ on_key_pressed (GtkEventControllerKey *controller,
                 NimfGtk4IMContext     *context)
 {
   g_debug (G_STRLOC ": %s", G_STRFUNC);
+  if (is_password_field (context))
+    return FALSE;
+
   g_debug ("GTK4 KEY PRESSED: keyval=%u, keycode=%u, state=%u", keyval, keycode, state);
 
   if (!context->im) {
@@ -242,7 +261,7 @@ on_key_released (GtkEventControllerKey *controller,
 {
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 
-  if (!context->im)
+  if (!context->im || is_password_field (context))
     return FALSE;
 
   GdkEvent *event = gtk_event_controller_get_current_event (GTK_EVENT_CONTROLLER (controller));
@@ -374,6 +393,9 @@ nimf_gtk4_im_context_filter_keypress (GtkIMContext *context, GdkEvent *event)
 
   NimfGtk4IMContext *nimf_context = NIMF_GTK4_IM_CONTEXT (context);
   
+  if (event && is_password_field (nimf_context))
+    return nimf_context->simple && gtk_im_context_filter_keypress (nimf_context->simple, event);
+
   g_debug ("GTK4 IM: keyval=%u, state=%u", gdk_key_event_get_keyval (event), gdk_event_get_modifier_state (event));
 
   if (!nimf_context->im || !event) {
@@ -509,6 +531,9 @@ nimf_gtk4_im_context_set_surrounding (GtkIMContext *context,
   g_debug (G_STRLOC ": %s", G_STRFUNC);
 
   NimfGtk4IMContext *nimf_context = NIMF_GTK4_IM_CONTEXT (context);
+
+  if (is_password_field (nimf_context))
+    return;
 
   if (nimf_context->im)
     nimf_im_set_surrounding (nimf_context->im, text, len, cursor_index);

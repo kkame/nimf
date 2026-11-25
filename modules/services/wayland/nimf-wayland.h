@@ -90,6 +90,7 @@ struct _NimfWayland
   xkb_mod_mask_t meta_mask;
 
   uint32_t serial;
+  gboolean password_field;
 
   /* IBus / GNOME Wayland (zwp_text_input_v3) bridge */
   GDBusConnection  *ibus_conn;
@@ -103,6 +104,7 @@ struct _NimfWayland
   guint32           ibus_caps;
   gboolean          ibus_preedit_visible;
   gboolean          ibus_suppress_signals;
+  gboolean          ibus_password_field;
   gboolean          ibus_buffering;
   GString          *ibus_pending_commit;
   gboolean          ibus_has_pending_preedit;

@@ -31,6 +31,14 @@
 #include "nimf-wayland.h"
 #include "nimf-service.h"
 
+/* Wire values from text-input-unstable-v1 and IBusInputPurpose. */
+enum {
+  TEXT_INPUT_V1_PURPOSE_PASSWORD = 8,
+  TEXT_INPUT_V1_HINT_HIDDEN_TEXT = 0x40,
+  IBUS_PURPOSE_PASSWORD = 8,
+  IBUS_PURPOSE_PIN = 9
+};
+
 static void     nimf_wayland_ibus_stop  (NimfWayland *wayland);
 static gboolean nimf_wayland_ibus_start (NimfWayland *wayland);
 
@@ -201,7 +209,9 @@ handle_content_type (void *data,
                      uint32_t hint,
                      uint32_t purpose)
 {
-  g_debug (G_STRLOC ": %s", G_STRFUNC);
+  NimfWayland *wayland = data;
+  wayland->password_field = purpose == TEXT_INPUT_V1_PURPOSE_PASSWORD ||
+                            (hint & TEXT_INPUT_V1_HINT_HIDDEN_TEXT);
 }
 
 static void
@@ -333,6 +343,15 @@ input_method_keyboard_key (void *data,
   guint32 modifiers;
   NimfEvent *event;
 
+  if (!wayland->context)
+    return;
+
+  if (wayland->password_field)
+  {
+    zwp_input_method_context_v1_key (wayland->context, serial, time, key, state);
+    return;
+  }
+
   if (!wayland->state)
     return;
 
@@ -435,6 +454,7 @@ input_method_activate (void *data,
   if (wayland->context)
     zwp_input_method_context_v1_destroy (wayland->context);
 
+  wayland->password_field = FALSE;
   wayland->serial = 0;
   wayland->context = context;
   zwp_input_method_context_v1_add_listener (context,
@@ -589,7 +609,7 @@ nimf_wayland_on_engine_call (GDBusConnection       *conn,
     g_variant_get (params, "(uuu)", &keyval, &keycode, &state);
 
     /* Ignore synthetic or already handled IBus events (bit 24 and 25) */
-    if (state & ((1U << 24) | (1U << 25)))
+    if (wayland->ibus_password_field || (state & ((1U << 24) | (1U << 25))))
     {
       g_dbus_method_invocation_return_value (inv, g_variant_new ("(b)", FALSE));
       return;
@@ -658,6 +678,7 @@ nimf_wayland_on_engine_call (GDBusConnection       *conn,
     wayland->ibus_suppress_signals = TRUE;
     wayland->ibus_preedit_visible = FALSE;
     nimf_service_ic_focus_out (ic);
+    wayland->ibus_password_field = FALSE;
     wayland->ibus_suppress_signals = FALSE;
     g_dbus_method_invocation_return_value (inv, NULL);
     return;
@@ -723,7 +744,14 @@ nimf_wayland_on_engine_set_property (GDBusConnection  *conn,
                                      gpointer          user_data)
 {
   if (g_strcmp0 (prop_name, "ContentType") == 0)
+  {
+    NimfWayland *wayland = NIMF_WAYLAND (user_data);
+    guint32 purpose, hints;
+    g_variant_get (value, "(uu)", &purpose, &hints);
+    wayland->ibus_password_field = purpose == IBUS_PURPOSE_PASSWORD ||
+                                   purpose == IBUS_PURPOSE_PIN;
     return TRUE;
+  }
 
   return FALSE;
 }
@@ -906,6 +934,7 @@ nimf_wayland_ibus_disconnect (NimfWayland *wayland)
     g_string_truncate (wayland->ibus_pending_commit, 0);
 
   g_clear_pointer (&wayland->ibus_engine_path, g_free);
+  wayland->ibus_password_field = FALSE;
 }
 
 static void
